@@ -14,6 +14,7 @@ gen/
 
 # Local configuration file (sdk path, etc)
 local.properties
+<<<<<<< HEAD
 
 *.pydevproject
 .project
@@ -41,3 +42,5 @@ local.properties
 
 # PDT-specific
 .buildpath
+=======
+>>>>>>> 116b4b8f5a8c7aeb9153f00a709a53a24b010a4d
