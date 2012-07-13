@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="hello">Hello World, SpreadsheetView!</string>
+    <string name="app_name">Sharps.se</string>
+    <string name="loginButton">Login</string>
+    <string name="UsernameField">Användarnamn</string>
+    <string name="PasswordField">Lösenord</string>
+    <string name="LogoDescription">Logo</string>
+    <string name="addButton">Lägg till spel</string>
+    <string name="refreshButton">Refresh</string>
+    
+    <color name="titlebackgroundcolor">#3232CD</color>
+    <color name="titletextcolor">#FFFF00</color>
+
+</resources>
