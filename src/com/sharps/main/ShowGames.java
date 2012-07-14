@@ -91,7 +91,7 @@ public class ShowGames extends ListActivity {
 		}
 		String[] from = { "line1", "line2" };
 		int[] to = { android.R.id.text1, android.R.id.text2 };
-		setListAdapter(new SimpleAdapter(this, content,
-				android.R.layout.simple_list_item_2, from, to));
+		setListAdapter(new ShowGameAdapter(this, content,
+				android.R.layout.simple_list_item_2, from, to,game));
 	}
 }
