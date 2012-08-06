@@ -38,17 +38,22 @@ public class NetworkMediator{
 	private Library library;
 	private CookieStore cockies;
 	private ArrayList<NetworkContentContainer> contentContainer = new ArrayList<NetworkContentContainer>();
-	private LoginListener loginListener;
-	private String[] titles = { "Hemmalag", "Bortalag", "Datum", "Tid",
-			"Tecken", "Tecken2", "Insats", "Odds", "Netto", "Sport", "Land",
-			"Liga", "Bolag", "Period" };
-	private String[] keys = { "team1", "team2", "date", "time", "sign",
-			"sign2", "amount", "odds", "result", "sport", "country", "league",
-			"bolag", "period" };
-	private boolean loggedIn=false;
+	LoginListener loginListener;
+	public void setCockies(CookieStore cockies) {
+		this.cockies = cockies;
+	}
 
-	public String[] getKeys() {
+	private String[] titles = { "Hemmalag", "Bortalag", "Datum", "Tid",
+			"Tecken", "Tecken2", "Sport", "Land",
+			"Liga", "Bolag", "Period","Info","Rekare" ,"Insats", "Odds", "Netto" };
+	private String[] keys = { "team1", "team2", "date", "time", "sign",
+			"sign2", "sport", "country", "league",
+			"bolag", "period","info","rekare", "amount", "odds", "result" };
+	public String[] getTitles() {
 		return titles;
+	}
+	public String[] getKeys() {
+		return keys;
 	}
 
 	public void setLoginListener(LoginListener loginListener) {
@@ -80,49 +85,7 @@ public class NetworkMediator{
 	}
 
 	public synchronized void login(String username, String password) {
-		username = "luntfen";
-		password = "ERIlun849";
-		HttpClient hc = new DefaultHttpClient();
-		HttpPost post = new HttpPost(
-				"http://www.sharps.se/forums/login.php?do=login");
-		List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(5);
-		nameValuePairs
-				.add(new BasicNameValuePair("vb_login_username", username));
-		nameValuePairs
-				.add(new BasicNameValuePair("vb_login_password", password));
-		nameValuePairs.add(new BasicNameValuePair("securitytoken", "guest"));
-		nameValuePairs.add(new BasicNameValuePair("do", "login"));
-		nameValuePairs.add(new BasicNameValuePair("cookieuser", "1"));
-		try {
-			// Create local HTTP context
-			HttpContext localContext = new BasicHttpContext();
-			// Bind custom cookie store to the local context
-			localContext.setAttribute(ClientContext.COOKIE_STORE, cockies);
-			post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-			HttpResponse response = hc.execute(post, localContext);
-
-			Iterator iterator = cockies.getCookies().iterator();
-			while (iterator.hasNext()) {
-				String string = iterator.next().toString();
-				if (string.startsWith(("vbseo"), 19) && string.contains("yes")) {
-					System.out.println("logged in");
-					loginListener.loginFinished(true);
-					loggedIn=true;
-				}
-			}
-			if (!loggedIn) {
-				loginListener.loginFinished(false);
-			}
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ClientProtocolException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		LogginHandler handler=new LogginHandler(username, password);
 	}
 
 	public Library getLibrary() {

@@ -69,11 +69,11 @@ public class GamesView extends ListActivity implements NetworkContentContainer,
 			for (Hashtable<String, String> hashtable : mediator.getLibrary()
 					.getGames().get(id)) {
 				HashMap<String, String> hashMap = new HashMap<String, String>();
-				hashMap.put("line1", hashtable.get("Hemmalag") + "-"
-						+ hashtable.get("Bortalag"));
-				hashMap.put("line2", "Insats: " + hashtable.get("Insats")
-						+ " Odds: " + hashtable.get("Odds") + " Netto: "
-						+ hashtable.get("Netto"));
+				hashMap.put("line1", hashtable.get("team1") + "-"
+						+ hashtable.get("team2"));
+				hashMap.put("line2", "Insats: " + hashtable.get("amount")
+						+ " Odds: " + hashtable.get("odds") + " Netto: "
+						+ hashtable.get("result"));
 				hashMap.put("id", id);
 				content.add(hashMap);
 			}
@@ -109,11 +109,11 @@ public class GamesView extends ListActivity implements NetworkContentContainer,
 				for (Hashtable<String, String> hashtable : mediator
 						.getLibrary().getGames().get(id)) {
 					HashMap<String, String> hashMap = new HashMap<String, String>();
-					hashMap.put("line1", hashtable.get("Hemmalag") + "-"
-							+ hashtable.get("Bortalag"));
-					hashMap.put("line2", "Insats: " + hashtable.get("Insats")
-							+ " Odds: " + hashtable.get("Odds") + " Netto: "
-							+ hashtable.get("Netto"));
+					hashMap.put("line1", hashtable.get("team1") + "-"
+							+ hashtable.get("team2"));
+					hashMap.put("line2", "Insats: " + hashtable.get("amount")
+							+ " Odds: " + hashtable.get("odds") + " Netto: "
+							+ hashtable.get("result"));
 					hashMap.put("id", id);
 					content.add(hashMap);
 				}

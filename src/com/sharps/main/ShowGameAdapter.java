@@ -29,8 +29,7 @@ public class ShowGameAdapter extends SimpleAdapter {
 		((TextView) view.findViewById(android.R.id.text1))
 		.setTextColor(Color.WHITE);
 		if(position==getCount()-1){
-			System.out.println(game.get("Netto"));
-			double netto=Double.parseDouble(game.get("Netto"));
+			double netto=Double.parseDouble(game.get("result"));
 			if (netto>0) {
 				((TextView) view.findViewById(android.R.id.text1))
 						.setTextColor(Color.GREEN);

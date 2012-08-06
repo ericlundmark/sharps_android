@@ -84,7 +84,7 @@ public class ShowGames extends ListActivity {
 				HashMap<String, String> hashMap = new HashMap<String, String>();
 				if (hashtable.get(mediator.getKeys()[i])!=null) {
 					hashMap.put("line1", hashtable.get(mediator.getKeys()[i]));
-					hashMap.put("line2", mediator.getKeys()[i]);
+					hashMap.put("line2", mediator.getTitles()[i]);
 					content.add(hashMap);
 				}
 			}

@@ -30,19 +30,21 @@ import com.sharps.main.ViewContent;
 import android.os.AsyncTask;
 import android.widget.ProgressBar;
 
-
-public class GamesDownloader extends AsyncTask<String, Integer, HashMap<String, ArrayList<Hashtable<String,String>>>>{
+public class GamesDownloader
+		extends
+		AsyncTask<String, Integer, HashMap<String, ArrayList<Hashtable<String, String>>>> {
 	private NetworkMediator mediator = NetworkMediator.getSingletonObject();
+
 	public GamesDownloader(String URL) {
 		execute(URL);
 		// TODO Auto-generated constructor stub
 	}
 
 	@Override
-	protected HashMap<String, ArrayList<Hashtable<String,String>>> doInBackground(
+	protected HashMap<String, ArrayList<Hashtable<String, String>>> doInBackground(
 			String... params) {
 		// TODO Auto-generated method stub
-		String str="";
+		String str = "";
 		try {
 			HttpClient hc = new DefaultHttpClient();
 			HttpGet post = new HttpGet(params[0]);
@@ -59,17 +61,19 @@ public class GamesDownloader extends AsyncTask<String, Integer, HashMap<String, 
 		}
 		return parseContent(str);
 	}
- 
+
 	@Override
 	protected void onPostExecute(
-			HashMap<String, ArrayList<Hashtable<String,String>>> result) {
+			HashMap<String, ArrayList<Hashtable<String, String>>> result) {
 		// TODO Auto-generated method stub
 		super.onPostExecute(result);
 		mediator.notifyContentContainers(ViewContent.GAMES);
 	}
 
-	private HashMap<String, ArrayList<Hashtable<String,String>>> parseContent(String str) {
-		HashMap<String, ArrayList<Hashtable<String,String>>> map=mediator.getLibrary().getGames();
+	private HashMap<String, ArrayList<Hashtable<String, String>>> parseContent(
+			String str) {
+		HashMap<String, ArrayList<Hashtable<String, String>>> map = mediator
+				.getLibrary().getGames();
 		// TODO Auto-generated method stub
 		try {
 			DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory
@@ -81,197 +85,145 @@ public class GamesDownloader extends AsyncTask<String, Integer, HashMap<String, 
 			doc.getDocumentElement().normalize();
 			System.out.println("Root element of the doc is "
 					+ doc.getDocumentElement().getNodeName());
-			NodeList listOfEvents = doc.getElementsByTagName("game");
-			int totalPersons = listOfEvents.getLength();
-			System.out.println("Total no of games : " + totalPersons);
+			NodeList listOfGames = doc.getElementsByTagName("game");
+			int totalGames = listOfGames.getLength();
+			System.out.println("Total no of games : " + totalGames);
 
-			for (int s = 0; s < listOfEvents.getLength(); s++) {
-				Node eventNode = listOfEvents.item(s);
+			for (int s = 0; s < listOfGames.getLength(); s++) {
+				Hashtable<String, String> table = new Hashtable<String, String>();
+				String id = null;
+				Node eventNode = listOfGames.item(s);
 				if (eventNode.getNodeType() == Node.ELEMENT_NODE) {
-
 					Element eventElement = (Element) eventNode;
-
-					// -------
-					NodeList firstNameList = eventElement
-							.getElementsByTagName("sheetid");
-					Element firstNameElement = (Element) firstNameList.item(0);
-
-					NodeList textFNList = firstNameElement.getChildNodes();
-					String id = ((Node) textFNList.item(0)).getNodeValue()
-							.trim();
-					System.out.println("id : " + id);
-					if (map.get(id) == null) {
-						map.put(id,
-								new ArrayList<Hashtable<String,String>>());
+					for (int i = 0; i < eventElement.getChildNodes()
+							.getLength(); i++) {
+						Node e = eventElement.getChildNodes().item(i)
+								.getChildNodes().item(0);
+						if (e != null && e.getNodeValue() != null) {
+							if (eventNode.getChildNodes().item(i).getNodeName()
+									.equals("sheetid")) {
+								id = e.getNodeValue();
+								if (map.get(id)==null) {
+									map.put(id,
+											new ArrayList<Hashtable<String, String>>());
+								}
+							}
+							table.put(eventNode.getChildNodes().item(i)
+									.getNodeName(), e.getNodeValue());
+						}
 					}
-					Hashtable<String, String> table=new Hashtable<String, String>();
-					// -------
-					NodeList parlayList = eventElement
-							.getElementsByTagName("team1");
-					Element parlayElement = (Element) parlayList.item(0);
-
-					NodeList textParlayList = parlayElement.getChildNodes();
-					String parlay;
-					if(textParlayList.item(0)!=null){
-						parlay = ((Node) textParlayList.item(0))
-								.getNodeValue().trim();
-						System.out.println("team1 : " + parlay);
-						table.put("Parlay", parlay);
-					}else{
-						table.put("Parlay", "Not specified");
-					}
-					// -------
-					NodeList lastNameList = eventElement
-							.getElementsByTagName("team1");
-					Element lastNameElement = (Element) lastNameList.item(0);
-
-					NodeList textLNList = lastNameElement.getChildNodes();
-					String home;
-					if(textLNList.item(0)!=null){
-						home = ((Node) textLNList.item(0))
-								.getNodeValue().trim();
-						System.out.println("team1 : " + home);
-						table.put("Hemmalag", home);
-					}else{
-						table.put("Hemmalag", "Not specified");
-					}
-					
-					
-
-					// -------
-
-					NodeList titleNameList = eventElement
-							.getElementsByTagName("team2");
-					Element titleNameElement = (Element) titleNameList.item(0);
-
-					NodeList textTitleList = titleNameElement.getChildNodes();
-					String away;
-					if(textTitleList.item(0)!=null){
-						 away = ((Node) textTitleList.item(0))
-								.getNodeValue().trim();
-					}else{
-						away="Not specified";
-					}
-					table.put("Bortalag", away);
-					//----------
-					NodeList oddsList = eventElement
-							.getElementsByTagName("odds");
-					Element oddsElement = (Element) oddsList.item(0);
-
-					NodeList textOddsList = oddsElement.getChildNodes();
-					
-					String odds;
-					if(textOddsList.item(0)!=null){
-						 odds = ((Node) textOddsList.item(0))
-								.getNodeValue().trim();
-					}else{
-						odds="Not specified";
-					}
-					System.out.println("odds : " + odds);
-					table.put("Odds", odds);
-					//----------
-					NodeList stakeList = eventElement
-							.getElementsByTagName("amount");
-					Element stakeElement = (Element) stakeList.item(0);
-
-					NodeList textStakeList = stakeElement.getChildNodes();
-					String stake;
-					if(textStakeList.item(0)!=null){
-						 stake = ((Node) textStakeList.item(0))
-								.getNodeValue().trim();
-					}else{
-						stake="Not specified";
-					}					
-					table.put("Insats", stake);
-					//----------
-					NodeList nettoList = eventElement
-							.getElementsByTagName("result");
-					Element nettoElement = (Element) nettoList.item(0);
-
-					NodeList textNettoList = nettoElement.getChildNodes();
-					String netto;
-					if(textNettoList.item(0)!=null){
-						 netto = ((Node) textNettoList.item(0))
-								.getNodeValue().trim();
-					}else{
-						netto="Not specified";
-					}	
-					table.put("Netto", netto);
-					//----------
-					NodeList signList = eventElement
-							.getElementsByTagName("sign");
-					Element signElement = (Element) signList.item(0);
-
-					NodeList textSignList = signElement.getChildNodes();
-					String sign;
-					if(textNettoList.item(0)!=null){
-						 sign = ((Node) textSignList.item(0))
-								.getNodeValue().trim();
-					}else{
-						sign="Not specified";
-					}
-					table.put("Tecken", sign);
-					//----------
-					NodeList sign2List = eventElement
-							.getElementsByTagName("sign2");
-					Element sign2Element = (Element) sign2List.item(0);
-
-					NodeList textSign2List = sign2Element.getChildNodes();
-					String sign2;
-					if(textSign2List.item(0)!=null){
-						 sign2 = ((Node) textSign2List.item(0))
-								.getNodeValue().trim();
-					}else{
-						sign2="Not specified";
-					}
-					table.put("Tecken2", sign2);
-					
-					//----------
-					NodeList dateList = eventElement
-							.getElementsByTagName("date");
-					Element dateElement = (Element) dateList.item(0);
-
-					NodeList textDateList = dateElement.getChildNodes();
-					String date;
-					if(textDateList.item(0)!=null){
-						date = ((Node) textDateList.item(0))
-								.getNodeValue().trim();
-					}else{
-						date="Not specified";
-					}
-					table.put("Datum", date);
-					//----------
-					NodeList spelIDList = eventElement
-							.getElementsByTagName("spelid");
-					Element spelIDelement = (Element) spelIDList.item(0);
-
-					NodeList textSpelIDList = spelIDelement.getChildNodes();
-					String spelID;
-					if(textSpelIDList.item(0)!=null){
-						spelID = ((Node) textSpelIDList.item(0))
-								.getNodeValue().trim();
-					}else{
-						spelID="Not specified";
-					}
-					table.put("spelid", spelID);
-					//----------
-					NodeList timeList = eventElement
-							.getElementsByTagName("time");
-					Element timeElement = (Element) timeList.item(0);
-
-					NodeList textTimeList = timeElement.getChildNodes();
-					String time;
-					if(textTimeList.item(0)!=null){
-						time = ((Node) textTimeList.item(0))
-								.getNodeValue().trim();
-					}else{
-						time="Not specified";
-					}
-					table.put("Tid", time);
-					
 					map.get(id).add(table);
+					/*
+					 * // ------- NodeList firstNameList = eventElement
+					 * .getElementsByTagName("sheetid"); Element
+					 * firstNameElement = (Element) firstNameList.item(0);
+					 * 
+					 * NodeList textFNList = firstNameElement.getChildNodes();
+					 * String id = ((Node) textFNList.item(0)).getNodeValue()
+					 * .trim(); if (map.get(id) == null) { map.put(id, new
+					 * ArrayList<Hashtable<String,String>>()); }
+					 * Hashtable<String, String> table=new Hashtable<String,
+					 * String>(); // ------- NodeList parlayList = eventElement
+					 * .getElementsByTagName("team1"); Element parlayElement =
+					 * (Element) parlayList.item(0);
+					 * 
+					 * NodeList textParlayList = parlayElement.getChildNodes();
+					 * String parlay; if(textParlayList.item(0)!=null){ parlay =
+					 * ((Node) textParlayList.item(0)) .getNodeValue().trim();
+					 * table.put("Parlay", parlay); }else{ table.put("Parlay",
+					 * "Not specified"); } // ------- NodeList lastNameList =
+					 * eventElement .getElementsByTagName("team1"); Element
+					 * lastNameElement = (Element) lastNameList.item(0);
+					 * 
+					 * NodeList textLNList = lastNameElement.getChildNodes();
+					 * String home; if(textLNList.item(0)!=null){ home = ((Node)
+					 * textLNList.item(0)) .getNodeValue().trim();
+					 * table.put("Hemmalag", home); }else{ table.put("Hemmalag",
+					 * "Not specified"); }
+					 * 
+					 * 
+					 * 
+					 * // -------
+					 * 
+					 * NodeList titleNameList = eventElement
+					 * .getElementsByTagName("team2"); Element titleNameElement
+					 * = (Element) titleNameList.item(0);
+					 * 
+					 * NodeList textTitleList =
+					 * titleNameElement.getChildNodes(); String away;
+					 * if(textTitleList.item(0)!=null){ away = ((Node)
+					 * textTitleList.item(0)) .getNodeValue().trim(); }else{
+					 * away="Not specified"; } table.put("Bortalag", away);
+					 * //---------- NodeList oddsList = eventElement
+					 * .getElementsByTagName("odds"); Element oddsElement =
+					 * (Element) oddsList.item(0);
+					 * 
+					 * NodeList textOddsList = oddsElement.getChildNodes();
+					 * 
+					 * String odds; if(textOddsList.item(0)!=null){ odds =
+					 * ((Node) textOddsList.item(0)) .getNodeValue().trim();
+					 * }else{ odds="Not specified"; } table.put("Odds", odds);
+					 * //---------- NodeList stakeList = eventElement
+					 * .getElementsByTagName("amount"); Element stakeElement =
+					 * (Element) stakeList.item(0);
+					 * 
+					 * NodeList textStakeList = stakeElement.getChildNodes();
+					 * String stake; if(textStakeList.item(0)!=null){ stake =
+					 * ((Node) textStakeList.item(0)) .getNodeValue().trim();
+					 * }else{ stake="Not specified"; } table.put("Insats",
+					 * stake); //---------- NodeList nettoList = eventElement
+					 * .getElementsByTagName("result"); Element nettoElement =
+					 * (Element) nettoList.item(0);
+					 * 
+					 * NodeList textNettoList = nettoElement.getChildNodes();
+					 * String netto; if(textNettoList.item(0)!=null){ netto =
+					 * ((Node) textNettoList.item(0)) .getNodeValue().trim();
+					 * }else{ netto="Not specified"; } table.put("Netto",
+					 * netto); //---------- NodeList signList = eventElement
+					 * .getElementsByTagName("sign"); Element signElement =
+					 * (Element) signList.item(0);
+					 * 
+					 * NodeList textSignList = signElement.getChildNodes();
+					 * String sign; if(textNettoList.item(0)!=null){ sign =
+					 * ((Node) textSignList.item(0)) .getNodeValue().trim();
+					 * }else{ sign="Not specified"; } table.put("Tecken", sign);
+					 * //---------- NodeList sign2List = eventElement
+					 * .getElementsByTagName("sign2"); Element sign2Element =
+					 * (Element) sign2List.item(0);
+					 * 
+					 * NodeList textSign2List = sign2Element.getChildNodes();
+					 * String sign2; if(textSign2List.item(0)!=null){ sign2 =
+					 * ((Node) textSign2List.item(0)) .getNodeValue().trim();
+					 * }else{ sign2="Not specified"; } table.put("Tecken2",
+					 * sign2);
+					 * 
+					 * //---------- NodeList dateList = eventElement
+					 * .getElementsByTagName("date"); Element dateElement =
+					 * (Element) dateList.item(0);
+					 * 
+					 * NodeList textDateList = dateElement.getChildNodes();
+					 * String date; if(textDateList.item(0)!=null){ date =
+					 * ((Node) textDateList.item(0)) .getNodeValue().trim();
+					 * }else{ date="Not specified"; } table.put("Datum", date);
+					 * //---------- NodeList spelIDList = eventElement
+					 * .getElementsByTagName("spelid"); Element spelIDelement =
+					 * (Element) spelIDList.item(0);
+					 * 
+					 * NodeList textSpelIDList = spelIDelement.getChildNodes();
+					 * String spelID; if(textSpelIDList.item(0)!=null){ spelID =
+					 * ((Node) textSpelIDList.item(0)) .getNodeValue().trim();
+					 * }else{ spelID="Not specified"; } table.put("spelid",
+					 * spelID); //---------- NodeList timeList = eventElement
+					 * .getElementsByTagName("time"); Element timeElement =
+					 * (Element) timeList.item(0);
+					 * 
+					 * NodeList textTimeList = timeElement.getChildNodes();
+					 * String time; if(textTimeList.item(0)!=null){ time =
+					 * ((Node) textTimeList.item(0)) .getNodeValue().trim();
+					 * }else{ time="Not specified"; } table.put("Tid", time);
+					 */
 				}// end of if clause
-
+				
 			}// end of for loop with s var
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block

@@ -36,7 +36,7 @@ public class LoginScreen extends Activity implements LoginListener {
 	private OnClickListener myClickHandler_Login = new OnClickListener() {
 
 		public void onClick(View v) {
-			ProgressDialog dialog=ProgressDialog.show(LoginScreen.this, "Logging in", "Loading...");
+			dialog=ProgressDialog.show(LoginScreen.this, "Logging in", "Loading...");
 			dialog.show();
 			mediator.login(usernameField.getText().toString(),passwordField.getText().toString());
 		}
@@ -49,8 +49,10 @@ public class LoginScreen extends Activity implements LoginListener {
 			Intent myIntent = new Intent(LoginScreen.this,
 					SpreadsheetView.class);
 			finish();
+			dialog.dismiss();
 			LoginScreen.this.startActivity(myIntent);
 		}else{
+			dialog.dismiss();
 			AlertDialog ballarUr=new AlertDialog.Builder(this).create();
 			ballarUr.setTitle("Fail");
 			ballarUr.setMessage("Inloggningen misslyckades");
