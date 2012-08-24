@@ -12,5 +12,6 @@
     
     <color name="titlebackgroundcolor">#3232CD</color>
     <color name="titletextcolor">#FFFF00</color>
+    <string name="SearchLabel">Sök</string>
 
 </resources>

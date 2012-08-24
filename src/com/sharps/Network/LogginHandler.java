@@ -3,7 +3,6 @@ package com.sharps.Network;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.apache.http.HttpResponse;
@@ -15,10 +14,14 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 
 import android.os.AsyncTask;
+
 
 public class LogginHandler extends AsyncTask<String, Integer, Void>{
 	private String username;
@@ -34,11 +37,25 @@ public class LogginHandler extends AsyncTask<String, Integer, Void>{
 	}
 
 	@Override
+	protected void onPostExecute(Void result) {
+		// TODO Auto-generated method stub
+		mediator.loginListener.loginFinished(mediator.isLoggedIn());
+		super.onPostExecute(result);
+	}
+
+	@Override
 	protected Void doInBackground(String... params) {
 		// TODO Auto-generated method stub
 		username = "luntfen";
 		password = "ERIlun849";
-		HttpClient hc = new DefaultHttpClient();
+		HttpParams httpParameters = new BasicHttpParams();
+		int timeoutConnection = 3000;
+		HttpConnectionParams.setConnectionTimeout(httpParameters, timeoutConnection);
+		// Set the default socket timeout (SO_TIMEOUT) 
+		// in milliseconds which is the timeout for waiting for data.
+		int timeoutSocket = 3000;
+		HttpConnectionParams.setSoTimeout(httpParameters, timeoutSocket);
+		HttpClient hc = new DefaultHttpClient(httpParameters);
 		HttpPost post = new HttpPost(
 				"http://www.sharps.se/forums/login.php?do=login");
 		List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(5);
@@ -56,19 +73,6 @@ public class LogginHandler extends AsyncTask<String, Integer, Void>{
 			localContext.setAttribute(ClientContext.COOKIE_STORE,mediator.getCockies());
 			post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 			HttpResponse response = hc.execute(post, localContext);
-
-			Iterator iterator = mediator.getCockies().getCookies().iterator();
-			while (iterator.hasNext()) {
-				String string = iterator.next().toString();
-				if (string.startsWith(("vbseo"), 19) && string.contains("yes")) {
-					System.out.println("logged in");
-					mediator.loginListener.loginFinished(true);
-					loggedIn=true;
-				}
-			}
-			if (!loggedIn) {
-				mediator.loginListener.loginFinished(false);
-			}
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

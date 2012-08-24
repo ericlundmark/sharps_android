@@ -17,6 +17,9 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.w3c.dom.Element;
@@ -52,7 +55,14 @@ public class SheetDownloader extends
 		String str = "";
 
 		try {
-			HttpClient hc = new DefaultHttpClient();
+			HttpParams httpParameters = new BasicHttpParams();
+			int timeoutConnection = 3000;
+			HttpConnectionParams.setConnectionTimeout(httpParameters, timeoutConnection);
+			// Set the default socket timeout (SO_TIMEOUT) 
+			// in milliseconds which is the timeout for waiting for data.
+			int timeoutSocket = 3000;
+			HttpConnectionParams.setSoTimeout(httpParameters, timeoutSocket);
+			HttpClient hc = new DefaultHttpClient(httpParameters);
 			HttpGet post = new HttpGet(params[0]);
 			// Create local HTTP context
 			HttpContext localContext = new BasicHttpContext();
@@ -91,11 +101,11 @@ public class SheetDownloader extends
 			org.w3c.dom.Document doc = docBuilder.parse(is);
 			// normalize text representation
 			doc.getDocumentElement().normalize();
-			System.out.println("Root element of the doc is "
-					+ doc.getDocumentElement().getNodeName());
+			//System.out.println("Root element of the doc is "
+			//		+ doc.getDocumentElement().getNodeName());
 			NodeList listOfEvents = doc.getElementsByTagName("sheet");
 			int totalPersons = listOfEvents.getLength();
-			System.out.println("Total no of sheets : " + totalPersons);
+			//System.out.println("Total no of sheets : " + totalPersons);
 
 			for (int s = 0; s < listOfEvents.getLength(); s++) {
 				Node eventNode = listOfEvents.item(s);
@@ -111,7 +121,7 @@ public class SheetDownloader extends
 					NodeList textFNList = firstNameElement.getChildNodes();
 					String id = ((Node) textFNList.item(0)).getNodeValue()
 							.trim();
-					System.out.println("id : " + id);
+					//System.out.println("id : " + id);
 					if (decoded.get(id) == null) {
 						decoded.put(id, new Hashtable<String, String>());
 					}
