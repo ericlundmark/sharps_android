@@ -18,6 +18,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 
+import com.markupartist.android.widget.ActionBar;
+import com.markupartist.android.widget.ActionBar.Action;
 import com.sharps.R;
 import com.sharps.Network.NetworkMediator;
 
@@ -37,6 +39,21 @@ public class AddGame extends ListActivity {
 		id = i.getStringExtra("id");
 		Button button = (Button) findViewById(R.id.button1);
 		button.setOnClickListener(layGameButtonPushed);
+		ActionBar actionBar = (ActionBar) findViewById(R.id.actionbar);
+		actionBar.addAction(new Action() {
+			
+			@Override
+			public void performAction(View view) {
+				// TODO Auto-generated method stub
+				onSearchRequested();
+			}
+			
+			@Override
+			public int getDrawable() {
+				// TODO Auto-generated method stub
+				return R.drawable.ic_menu_search;
+			}
+		});
 		myList = (ListView) findViewById(android.R.id.list);
 		myList.setItemsCanFocus(true);
 		if (savedInstanceState!=null&&savedInstanceState.containsKey("game")) {

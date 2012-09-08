@@ -27,7 +27,9 @@ public class ShowGameAdapter extends SimpleAdapter {
 		// TODO Auto-generated method stub
 		View view = super.getView(position, convertView, parent);
 		((TextView) view.findViewById(android.R.id.text1))
-		.setTextColor(Color.WHITE);
+		.setTextColor(Color.BLACK);
+		((TextView) view.findViewById(android.R.id.text2))
+		.setTextColor(Color.GRAY);
 		if(position==getCount()-1){
 			double netto=Double.parseDouble(game.get("result"));
 			if (netto>0) {
