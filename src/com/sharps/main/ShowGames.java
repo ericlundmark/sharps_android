@@ -84,14 +84,14 @@ public class ShowGames extends ListActivity {
 				HashMap<String, String> hashMap = new HashMap<String, String>();
 				if (hashtable.get(mediator.getKeys()[i])!=null) {
 					hashMap.put("line1", hashtable.get(mediator.getKeys()[i]));
-					hashMap.put("line2", mediator.getKeys()[i]);
+					hashMap.put("line2", mediator.getTitles()[i]);
 					content.add(hashMap);
 				}
 			}
 		}
 		String[] from = { "line1", "line2" };
 		int[] to = { android.R.id.text1, android.R.id.text2 };
-		setListAdapter(new SimpleAdapter(this, content,
-				android.R.layout.simple_list_item_2, from, to));
+		setListAdapter(new ShowGameAdapter(this, content,
+				android.R.layout.simple_list_item_2, from, to,game));
 	}
 }

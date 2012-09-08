@@ -30,22 +30,18 @@ import org.xml.sax.SAXException;
 
 import android.os.AsyncTask;
 
-import com.sharps.main.ViewContent;
-
-public class GamesDownloader
-		extends
-		AsyncTask<String, Integer, HashMap<String, ArrayList<Hashtable<String, String>>>> {
+public class SearchGamesGetter extends AsyncTask<String, Integer,ArrayList<Hashtable<String, String>> > {
 	private NetworkMediator mediator = NetworkMediator.getSingletonObject();
-
-	public GamesDownloader(String URL) {
+	
+	public SearchGamesGetter(String URL) {
+		super();
 		execute(URL);
 		// TODO Auto-generated constructor stub
 	}
 
 	@Override
-	protected HashMap<String, ArrayList<Hashtable<String, String>>> doInBackground(
+	protected ArrayList<Hashtable<String, String>> doInBackground(
 			String... params) {
-		// TODO Auto-generated method stub
 		String str = "";
 		try {
 			HttpParams httpParameters = new BasicHttpParams();
@@ -70,19 +66,17 @@ public class GamesDownloader
 		}
 		return parseContent(str);
 	}
-
+	
 	@Override
-	protected void onPostExecute(
-			HashMap<String, ArrayList<Hashtable<String, String>>> result) {
+	protected void onPostExecute(ArrayList<Hashtable<String, String>> result) {
 		// TODO Auto-generated method stub
 		super.onPostExecute(result);
-		mediator.notifyContentContainers(ViewContent.GAMES);
+		mediator.getSearchable().searchFinished(result);
 	}
 
-	private HashMap<String, ArrayList<Hashtable<String, String>>> parseContent(
+	private ArrayList<Hashtable<String, String>> parseContent(
 			String str) {
-		HashMap<String, ArrayList<Hashtable<String, String>>> map = mediator
-				.getLibrary().getGames();
+		ArrayList<Hashtable<String, String>> map = new ArrayList<Hashtable<String,String>>();
 		// TODO Auto-generated method stub
 		try {
 			DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory
@@ -92,11 +86,11 @@ public class GamesDownloader
 			org.w3c.dom.Document doc = docBuilder.parse(is);
 			// normalize text representation
 			doc.getDocumentElement().normalize();
-			//System.out.println("Root element of the doc is "
-			//		+ doc.getDocumentElement().getNodeName());
+			System.out.println("Root element of the doc is "
+					+ doc.getDocumentElement().getNodeName());
 			NodeList listOfGames = doc.getElementsByTagName("game");
 			int totalGames = listOfGames.getLength();
-			//System.out.println("Total no of games : " + totalGames);
+			System.out.println("Total no of games : " + totalGames);
 
 			for (int s = 0; s < listOfGames.getLength(); s++) {
 				Hashtable<String, String> table = new Hashtable<String, String>();
@@ -109,19 +103,11 @@ public class GamesDownloader
 						Node e = eventElement.getChildNodes().item(i)
 								.getChildNodes().item(0);
 						if (e != null && e.getNodeValue() != null) {
-							if (eventNode.getChildNodes().item(i).getNodeName()
-									.equals("sheetid")) {
-								id = e.getNodeValue();
-								if (map.get(id)==null) {
-									map.put(id,
-											new ArrayList<Hashtable<String, String>>());
-								}
-							}
 							table.put(eventNode.getChildNodes().item(i)
 									.getNodeName(), e.getNodeValue());
 						}
 					}
-					map.get(id).add(table);
+					map.add(table);
 				}// end of if clause
 				
 			}// end of for loop with s var
@@ -140,5 +126,6 @@ public class GamesDownloader
 		}
 		return map;
 	}
+
 
 }

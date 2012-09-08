@@ -28,11 +28,11 @@ public class GameAdapter extends SimpleAdapter {
 		// TODO Auto-generated method stub
 		View view = super.getView(position, convertView, parent);
 		Hashtable<String, String> game=mediator.getLibrary().getGames().get(id).get(position);
-		double d=Double.parseDouble(game.get("Netto"));
-		if (d>=1) {
+		double d=Double.parseDouble(game.get("result"));
+		if (d>0) {
 			((TextView) view.findViewById(android.R.id.text2))
 					.setTextColor(Color.GREEN);
-		} else if (d < 1 && d != 0) {
+		} else if (d < 0) {
 			((TextView) view.findViewById(android.R.id.text2))
 					.setTextColor(Color.RED);
 		}else{

@@ -27,7 +27,6 @@ public class CorrectionHandler implements Runnable {
 		mediator = NetworkMediator.getSingletonObject();
 		this.id = id;
 		this.result = result;
-		System.out.println("rätta");
 		run();
 	}
 
