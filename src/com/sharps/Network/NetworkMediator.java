@@ -54,7 +54,6 @@ public class NetworkMediator {
 	private String[] keys = { "team1", "team2", "date", "time", "sign",
 			"sign2", "sport", "country", "league", "bolag", "period", "info",
 			"rekare", "amount", "odds", "result" };
-	public Context context;
 	private Searchable searchable;
 	
 	public Searchable getSearchable() {
@@ -193,7 +192,7 @@ public class NetworkMediator {
 
 	}
 
-	public boolean gotInternet() {
+	public boolean gotInternet(Context context) {
 		ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 		NetworkInfo netInfo = cm.getActiveNetworkInfo();
 		if (netInfo != null && netInfo.isConnectedOrConnecting()) {

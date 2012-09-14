@@ -3,6 +3,7 @@ package com.sharps.main;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -32,13 +33,16 @@ public class LoginScreen extends Activity implements LoginListener {
 		button=(Button)findViewById(R.id.button1);
 		button.setOnClickListener(myClickHandler_Login);
 		ballarUr=new AlertDialog.Builder(this).create();
-		mediator.context=this;
+	}
+
+	public Context getContext() {
+		return this;
 	}
 
 	private OnClickListener myClickHandler_Login = new OnClickListener() {
 
 		public void onClick(View v) {
-			if (mediator.gotInternet()) {
+			if (mediator.gotInternet(getContext())) {
 				dialog=ProgressDialog.show(LoginScreen.this, "", "Loggar in...");
 				dialog.show();
 				mediator.login(usernameField.getText().toString(),passwordField.getText().toString());
