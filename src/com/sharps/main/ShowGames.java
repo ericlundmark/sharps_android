@@ -1,5 +1,6 @@
 package com.sharps.main;
 
+import java.security.InvalidAlgorithmParameterException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -8,13 +9,11 @@ import android.app.ListActivity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.SimpleAdapter;
 
 import com.markupartist.android.widget.ActionBar;
 import com.markupartist.android.widget.ActionBar.Action;
 import com.sharps.R;
 import com.sharps.Network.NetworkMediator;
-import com.sharps.Network.NetworkMediator.Results;
 
 public class ShowGames extends ListActivity {
 	NetworkMediator mediator = NetworkMediator.getSingletonObject();
@@ -38,6 +37,9 @@ public class ShowGames extends ListActivity {
 				public void performAction(View view) {
 					// TODO Auto-generated method stub
 					mediator.setResultToGame(id,"win",game);
+					game.put("result", String.valueOf(Double.parseDouble(game.get("amount"))*Double.parseDouble(game.get("odds"))-Double.parseDouble(game.get("amount"))));
+					reloadContent();
+					getListView().invalidateViews();
 				}
 				
 				@Override
@@ -52,6 +54,9 @@ public class ShowGames extends ListActivity {
 				public void performAction(View view) {
 					// TODO Auto-generated method stub
 					mediator.setResultToGame(id,"push",game);
+					game.put("result","0");
+					reloadContent();
+					getListView().invalidateViews();
 				}
 				
 				@Override
@@ -66,6 +71,9 @@ public class ShowGames extends ListActivity {
 				public void performAction(View view) {
 					// TODO Auto-generated method stub
 					mediator.setResultToGame(id,"loss",game);
+					game.put("result", "-"+String.valueOf(Double.parseDouble(game.get("amount"))*Double.parseDouble(game.get("odds"))-Double.parseDouble(game.get("amount"))));
+					reloadContent();
+					getListView().invalidateViews();
 				}
 				
 				@Override
@@ -77,6 +85,14 @@ public class ShowGames extends ListActivity {
 		}
 		index=intent.getIntExtra("index", -1);
 		game=mediator.getLibrary().getGames().get(id).get(index);
+		reloadContent();
+		String[] from = { "line1", "line2" };
+		int[] to = { android.R.id.text1, android.R.id.text2 };
+		setListAdapter(new ShowGameAdapter(this, content,
+				android.R.layout.simple_list_item_2, from, to,game));
+	}
+	private void reloadContent(){
+		content.clear();
 		if (mediator.getLibrary().getGames().get(id) != null) {
 			Hashtable<String, String> hashtable = mediator.getLibrary()
 					.getGames().get(id).get(index);
@@ -89,9 +105,5 @@ public class ShowGames extends ListActivity {
 				}
 			}
 		}
-		String[] from = { "line1", "line2" };
-		int[] to = { android.R.id.text1, android.R.id.text2 };
-		setListAdapter(new ShowGameAdapter(this, content,
-				android.R.layout.simple_list_item_2, from, to,game));
 	}
 }

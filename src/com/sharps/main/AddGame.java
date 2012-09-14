@@ -2,6 +2,7 @@ package com.sharps.main;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Hashtable;
 
 import android.app.ListActivity;
 import android.app.SearchManager;

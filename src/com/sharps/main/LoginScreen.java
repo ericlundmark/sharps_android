@@ -32,25 +32,23 @@ public class LoginScreen extends Activity implements LoginListener {
 		button=(Button)findViewById(R.id.button1);
 		button.setOnClickListener(myClickHandler_Login);
 		ballarUr=new AlertDialog.Builder(this).create();
-		mediator.context=this.getBaseContext();
+		mediator.context=this;
 	}
 
 	private OnClickListener myClickHandler_Login = new OnClickListener() {
 
 		public void onClick(View v) {
 			if (mediator.gotInternet()) {
-				dialog=ProgressDialog.show(LoginScreen.this, "Logging in", "Loading...");
+				dialog=ProgressDialog.show(LoginScreen.this, "", "Loggar in...");
 				dialog.show();
 				mediator.login(usernameField.getText().toString(),passwordField.getText().toString());
 			}else{
-				ballarUr.setTitle("Fail");
-				ballarUr.setMessage("Inloggningen misslyckades");
+				ballarUr.setMessage("Ingen internetanslutning");
 				ballarUr.setButton("OK", new DialogInterface.OnClickListener() {
 				   public void onClick(DialogInterface dialog, int which) {
 				      // here you can add functions
 				   }
 				});
-				ballarUr.setIcon(R.drawable.ic_launcher);
 				ballarUr.show();
 			}
 			
@@ -69,9 +67,7 @@ public class LoginScreen extends Activity implements LoginListener {
 		}else{
 			
 			dialog.dismiss();
-			
-			ballarUr.setTitle("Fail");
-			ballarUr.setMessage("Inloggningen misslyckades");
+			ballarUr.setMessage("Fel inloggningsuppgifter");
 			ballarUr.setButton("OK", new DialogInterface.OnClickListener() {
 			   public void onClick(DialogInterface dialog, int which) {
 			      // here you can add functions

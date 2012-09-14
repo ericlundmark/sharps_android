@@ -225,7 +225,6 @@ public class NetworkMediator {
 			localContext.setAttribute(ClientContext.COOKIE_STORE, getCockies());
 			ResponseHandler<String> responseHandler = new BasicResponseHandler();
 			str = hc.execute(post, responseHandler, localContext);
-			System.out.println("Inkommande: " + str);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
