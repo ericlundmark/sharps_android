@@ -45,9 +45,6 @@ public class LogginHandler extends AsyncTask<String, Integer, Void>{
 
 	@Override
 	protected Void doInBackground(String... params) {
-		// TODO Auto-generated method stub
-		username = "luntfen";
-		password = "ERIlun849";
 		HttpParams httpParameters = new BasicHttpParams();
 		int timeoutConnection = 3000;
 		HttpConnectionParams.setConnectionTimeout(httpParameters, timeoutConnection);

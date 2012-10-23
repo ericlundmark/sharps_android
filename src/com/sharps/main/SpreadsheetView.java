@@ -84,7 +84,6 @@ public class SpreadsheetView extends ListActivity implements
 		super.onResume();
 		if (!mediator.isLoggedIn()) {
 			AlertDialog ballarUr=new AlertDialog.Builder(this).create();
-			ballarUr.setTitle("Fail");
 			ballarUr.setMessage("Utloggad");
 			ballarUr.setButton("OK", new DialogInterface.OnClickListener() {
 			   public void onClick(DialogInterface dialog, int which) {
@@ -95,7 +94,6 @@ public class SpreadsheetView extends ListActivity implements
 					SpreadsheetView.this.startActivity(myIntent);
 			   }
 			});
-			ballarUr.setIcon(R.drawable.ic_launcher);
 			ballarUr.show();
 		}
 	}

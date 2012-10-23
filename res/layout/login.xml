@@ -32,7 +32,8 @@
         android:layout_alignParentBottom="true"
         android:layout_alignRight="@+id/imageView1"
         android:layout_marginBottom="42dp"
-        android:text="@string/loginButton" />
+        android:text="@string/loginButton"
+        android:onClick="doLogin" />
 
     <EditText
         android:id="@+id/editText2"
@@ -46,5 +47,14 @@
         android:hint="@string/PasswordField"
         android:inputType="textPassword"
         android:singleLine="true" />
+
+    <CheckBox
+        android:id="@+id/checkBox1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/button1"
+        android:layout_alignLeft="@+id/editText2"
+        android:layout_marginBottom="23dp"
+        android:text="Kom ihåg mig" />
 
 </RelativeLayout>
