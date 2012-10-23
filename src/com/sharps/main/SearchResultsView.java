@@ -36,18 +36,18 @@ public class SearchResultsView extends ListActivity implements Searchable {
 				arrayList.add(result.get(arg2).get("team2"));
 				arrayList.add(result.get(arg2).get("date"));
 				arrayList.add(result.get(arg2).get("time"));
-				arrayList.add("sign");
-				arrayList.add("sign2");
+				arrayList.add("Tecken");
+				arrayList.add("Tecken2");
 				arrayList.add(result.get(arg2).get("sport"));
 				arrayList.add(result.get(arg2).get("country"));
 				arrayList.add(result.get(arg2).get("league"));
-				arrayList.add("bolag");
-				arrayList.add("period");
-				arrayList.add("info");
-				arrayList.add("rekare");
-				arrayList.add("amount");
-				arrayList.add("odds");
-				arrayList.add("result");
+				arrayList.add("Bolag");
+				arrayList.add("Period");
+				arrayList.add("Info");
+				arrayList.add("Rekare");
+				arrayList.add("Insats");
+				arrayList.add("Odds");
+				arrayList.add("Netto");
 				setResult(RESULT_OK, getIntent().putExtra("result", arrayList));
 				finish();
 			}

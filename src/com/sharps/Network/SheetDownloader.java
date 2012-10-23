@@ -124,6 +124,7 @@ public class SheetDownloader extends
 					//System.out.println("id : " + id);
 					if (decoded.get(id) == null) {
 						decoded.put(id, new Hashtable<String, String>());
+						decoded.get(id).put("id", id);
 					}
 
 					// -------

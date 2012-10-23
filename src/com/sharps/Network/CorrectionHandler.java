@@ -13,7 +13,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 
-public class CorrectionHandler implements Runnable {
+public class CorrectionHandler extends Thread {
 	Hashtable<String, String> game;
 	NetworkMediator mediator;
 	String id;
@@ -27,7 +27,6 @@ public class CorrectionHandler implements Runnable {
 		mediator = NetworkMediator.getSingletonObject();
 		this.id = id;
 		this.result = result;
-		run();
 	}
 
 	@Override

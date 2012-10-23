@@ -2,6 +2,7 @@ package com.sharps.main;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Hashtable;
 
 import android.app.ListActivity;
@@ -38,6 +39,7 @@ public class AddGame extends ListActivity {
 		setContentView(R.layout.add_game);
 		Intent i = getIntent();
 		id = i.getStringExtra("id");
+		String mode=i.getStringExtra("mode");
 		Button button = (Button) findViewById(R.id.button1);
 		button.setOnClickListener(layGameButtonPushed);
 		ActionBar actionBar = (ActionBar) findViewById(R.id.actionbar);
@@ -57,10 +59,22 @@ public class AddGame extends ListActivity {
 		});
 		myList = (ListView) findViewById(android.R.id.list);
 		myList.setItemsCanFocus(true);
-		if (savedInstanceState!=null&&savedInstanceState.containsKey("game")) {
+		if (savedInstanceState!=null&&savedInstanceState.containsKey("game")&&mode==null) {
 			searchResult.addAll(savedInstanceState.getStringArrayList("game"));
+		}else if(mode==null){
+			searchResult.addAll(Arrays.asList(mediator.getTitles()));
 		}else{
-			searchResult.addAll(Arrays.asList(mediator.getKeys()));
+			HashMap<String, String> game=(HashMap<String, String>) i.getSerializableExtra("rek");
+			ArrayList<String> list=new ArrayList<String>();
+			for (int j = 0; j < mediator.getKeys().length; j++) {
+				String temp=game.get(mediator.getKeys()[j]);
+				if(temp!=null){
+					list.add(temp);
+				}else{
+					list.add(mediator.getTitles()[j]);
+				}
+			}
+			searchResult.addAll(list);
 		}
 		myAdapter = new MyAdapter(searchResult);
 		myList.setAdapter(myAdapter);
@@ -107,7 +121,6 @@ public class AddGame extends ListActivity {
 	public class MyAdapter extends BaseAdapter {
 		private LayoutInflater mInflater;
 		public ArrayList<ListItem> myItems = new ArrayList<ListItem>();
-
 		public MyAdapter(ArrayList<String> textLabels) {
 			mInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 			for (int i = 0; i < textLabels.size(); i++) {
@@ -150,7 +163,7 @@ public class AddGame extends ListActivity {
 				holder = (ViewHolder) convertView.getTag();
 			}
 			// Fill EditText with the value you have in data source
-			if (myItems.get(position).caption.equals(mediator.getKeys()[position])) {
+			if (myItems.get(position).caption.equals(mediator.getTitles()[position])) {
 				holder.caption.setHint(((ListItem) myItems.get(position)).caption);
 			}else{
 				holder.caption.setText(((ListItem)myItems.get(position)).caption);

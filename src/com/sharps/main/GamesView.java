@@ -8,14 +8,11 @@ import android.app.ListActivity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ProgressBar;
 import android.widget.SimpleAdapter;
-import android.widget.Spinner;
 
 import com.markupartist.android.widget.ActionBar;
 import com.markupartist.android.widget.ActionBar.Action;
@@ -28,7 +25,6 @@ public class GamesView extends ListActivity implements NetworkContentContainer,
 	private NetworkMediator mediator = NetworkMediator.getSingletonObject();
 	private String id;
 	private ActionBar actionBar;
-	private ProgressBar bar;
 	boolean downloading = false;
 
 	@Override
@@ -36,7 +32,6 @@ public class GamesView extends ListActivity implements NetworkContentContainer,
 		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.games_view);
-		bar=new ProgressBar(getApplicationContext());
 		
 		getListView().setOnScrollListener(this);
 		mediator.setContentContainer(this);
@@ -128,7 +123,7 @@ public class GamesView extends ListActivity implements NetworkContentContainer,
 				System.out.println("notify " + content.size());
 				((SimpleAdapter) getListAdapter()).notifyDataSetChanged();
 				downloading = false;
-				actionBar.removeView(bar);
+				actionBar.setProgressBarVisibility(View.GONE);
 			}
 		}
 	}
@@ -149,7 +144,7 @@ public class GamesView extends ListActivity implements NetworkContentContainer,
 			downloading = true;
 			System.out.println("load more " + (content.size() + 1) / 10);
 			mediator.downloadNextGames(id);
-			actionBar.addView(bar);
+			actionBar.setProgressBarVisibility(View.VISIBLE);
 		}
 	}
 

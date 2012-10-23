@@ -1,14 +1,20 @@
 package com.sharps.main;
 
-import java.security.InvalidAlgorithmParameterException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.ListActivity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 
 import com.markupartist.android.widget.ActionBar;
 import com.markupartist.android.widget.ActionBar.Action;
@@ -82,6 +88,57 @@ public class ShowGames extends ListActivity {
 					return R.drawable.loss;
 				}
 			});
+		}else{
+			actionBar.addAction(new Action() {
+				private ArrayList<String> mySheets=new ArrayList<String>();
+				private ArrayList<String> sheetid= new ArrayList<String>();
+				@Override
+				public void performAction(View view) {
+					// TODO Auto-generated method stub
+					mySheets.clear();
+					sheetid.clear();
+					for (String string : mediator.getLibrary().getMySheets().keySet()) {
+						if (mediator.getLibrary().getMySheets().get(string).get("sheetGroup").equals("my")) {
+							mySheets.add(mediator.getLibrary().getMySheets().get(string).get("title"));
+							sheetid.add(mediator.getLibrary().getMySheets().get(string).get("id"));
+						}
+					}
+					
+					AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+					builder.setTitle("VŠlj spreadsheet");
+					ListView modeList = new ListView(getContext());
+					ArrayAdapter<String> modeAdapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_list_item_1, android.R.id.text1,mySheets);
+					modeList.setAdapter(modeAdapter);
+					builder.setView(modeList);
+					final Dialog dialog = builder.create();
+					modeList.setOnItemClickListener(new OnItemClickListener() {
+
+						@Override
+						public void onItemClick(AdapterView<?> arg0, View arg1,
+								int arg2, long arg3) {
+							// TODO Auto-generated method stub
+							Intent myIntent = new Intent(ShowGames.this, AddGame.class);
+							myIntent.putExtra("id", sheetid.get(arg2));
+							myIntent.putExtra("rek",game);
+							myIntent.putExtra("mode", "rek");
+							dialog.dismiss();
+							ShowGames.this.startActivity(myIntent);
+						}
+						
+					});
+
+					
+
+					dialog.show();
+					
+				}
+
+				@Override
+				public int getDrawable() {
+					// TODO Auto-generated method stub
+					return R.drawable.ic_menu_add;
+				}
+			});
 		}
 		index=intent.getIntExtra("index", -1);
 		game=mediator.getLibrary().getGames().get(id).get(index);
@@ -90,6 +147,9 @@ public class ShowGames extends ListActivity {
 		int[] to = { android.R.id.text1, android.R.id.text2 };
 		setListAdapter(new ShowGameAdapter(this, content,
 				android.R.layout.simple_list_item_2, from, to,game));
+	}
+	private Context getContext(){
+		return this;
 	}
 	private void reloadContent(){
 		content.clear();
