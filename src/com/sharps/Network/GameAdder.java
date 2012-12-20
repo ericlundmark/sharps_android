@@ -16,13 +16,11 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 
-import com.sharps.main.AddGame.MyAdapter.ListItem;
-
 public class GameAdder extends Thread {
-	private ArrayList<ListItem> myItems;
+	private ArrayList<String> myItems;
 	private String id;
 	private NetworkMediator mediator = NetworkMediator.getSingletonObject();
-	public GameAdder(ArrayList<ListItem> myItems, String id) {
+	public GameAdder(ArrayList<String> myItems, String id) {
 		super();
 		// TODO Auto-generated constructor stub
 		this.myItems=myItems;
@@ -37,10 +35,10 @@ public class GameAdder extends Thread {
 		try {
 			int index = 0;
 			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
-			for (ListItem item : myItems) {
-				if (!item.caption.equals(mediator.getTitles()[index])) {
+			for (String item : myItems) {
+				if (!item.equals(mediator.getTitles()[index])) {
 					nameValuePairs.add(new BasicNameValuePair(mediator.getKeys()[index],
-							item.caption));
+							item));
 				}
 				index++;
 			}
@@ -48,7 +46,7 @@ public class GameAdder extends Thread {
 			HttpPost post = new HttpPost(
 					"http://www.sharps.se/forums//includes/ss/ajax_edit_spreadsheet.php?id="
 							+ id + "&a=1");
-			post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+			post.setEntity(new UrlEncodedFormEntity(nameValuePairs,"UTF-8"));
 			// Create local HTTP context
 			HttpContext localContext = new BasicHttpContext();
 			// Bind custom cookie store to the local context

@@ -105,7 +105,7 @@ public class ShowGames extends ListActivity {
 					}
 					
 					AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-					builder.setTitle("VŠlj spreadsheet");
+					builder.setTitle("VÃ¤lj spreadsheet");
 					ListView modeList = new ListView(getContext());
 					ArrayAdapter<String> modeAdapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_list_item_1, android.R.id.text1,mySheets);
 					modeList.setAdapter(modeAdapter);

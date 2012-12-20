@@ -13,5 +13,6 @@
     <color name="titlebackgroundcolor">#3232CD</color>
     <color name="titletextcolor">#FFFF00</color>
     <string name="SearchLabel">Sök</string>
+    <string name="remember">Kom ihåg mig</string>
 
 </resources>

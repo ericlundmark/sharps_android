@@ -68,7 +68,7 @@ public class LogginHandler extends AsyncTask<String, Integer, Void>{
 			HttpContext localContext = new BasicHttpContext();
 			// Bind custom cookie store to the local context
 			localContext.setAttribute(ClientContext.COOKIE_STORE,mediator.getCockies());
-			post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+			post.setEntity(new UrlEncodedFormEntity(nameValuePairs,"UTF-8"));
 			HttpResponse response = hc.execute(post, localContext);
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
