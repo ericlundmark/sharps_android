@@ -90,7 +90,7 @@ public class SpreadsheetView extends ListActivity implements
 			      // here you can add functions
 				   finish();
 					Intent myIntent = new Intent(SpreadsheetView.this,
-							LoginScreen.class);
+							LoginActivity.class);
 					SpreadsheetView.this.startActivity(myIntent);
 			   }
 			});

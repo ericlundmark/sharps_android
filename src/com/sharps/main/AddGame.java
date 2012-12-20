@@ -36,7 +36,7 @@ public class AddGame extends ListActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.add_game);
+		setContentView(R.layout.activity_add_game);
 		Intent i = getIntent();
 		id = i.getStringExtra("id");
 		String mode=i.getStringExtra("mode");
