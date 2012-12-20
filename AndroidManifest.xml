@@ -30,11 +30,11 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.sharps.main.GamesView"
+            android:name="com.sharps.main.GamesActivity"
             android:label="@string/app_name" >
         </activity>
         <activity
-            android:name="com.sharps.main.ShowGames"
+            android:name="com.sharps.main.ShowGameActivity"
             android:label="@string/app_name" >
         </activity>
         <activity

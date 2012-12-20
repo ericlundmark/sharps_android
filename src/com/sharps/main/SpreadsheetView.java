@@ -59,7 +59,7 @@ public class SpreadsheetView extends ListActivity implements
 					long arg3) {
 				System.out.println(arg2);
 				Intent myIntent = new Intent(SpreadsheetView.this,
-						GamesView.class);
+						GamesActivity.class);
 				ArrayList<HashMap<String, String>> temp = new ArrayList<HashMap<String, String>>();
 				temp.addAll(myContent);
 				temp.addAll(favContent);
