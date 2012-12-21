@@ -130,8 +130,8 @@ public class LoginActivity extends Activity implements LoginListener {
 		if (status) {
 			Intent myIntent = new Intent(LoginActivity.this,
 					SpreadsheetView.class);
-			finish();
 			LoginActivity.this.startActivity(myIntent);
+			finish();
 		} else {
 			mPasswordView
 					.setError(getString(R.string.error_incorrect_password));
