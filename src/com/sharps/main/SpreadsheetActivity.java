@@ -4,24 +4,23 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Hashtable;
 
 import android.app.AlertDialog;
-import android.app.ListActivity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.NavUtils;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.SimpleAdapter;
 
-import com.markupartist.android.widget.ActionBar;
-import com.markupartist.android.widget.ActionBar.Action;
+import com.cellr.noid.actionbar.ActionBarListActivity;
 import com.sharps.R;
 import com.sharps.Network.NetworkMediator;
 
-public class SpreadsheetView extends ListActivity implements
+public class SpreadsheetActivity extends ActionBarListActivity implements
 		NetworkContentContainer {
 	NetworkMediator mediator = NetworkMediator.getSingletonObject();
 	private ArrayList<HashMap<String, String>> myContent = new ArrayList<HashMap<String, String>>();
@@ -34,31 +33,16 @@ public class SpreadsheetView extends ListActivity implements
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.spreadsheets_view);
-		ActionBar actionBar = (ActionBar) findViewById(R.id.actionbar);
 		// You can also assign the title programmatically by passing a
 		// CharSequence or resource id.
 		// actionBar.setTitle(R.string.some_title);
-		actionBar.addAction(new Action() {
-
-			@Override
-			public void performAction(View view) {
-				// TODO Auto-generated method stub
-				mediator.refreshSheets();
-			}
-
-			@Override
-			public int getDrawable() {
-				return R.drawable.ic_menu_refresh;
-				// TODO Auto-generated method stub
-			}
-		});
 		getListView().setOnItemClickListener(new OnItemClickListener() {
 
 			@Override
 			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
 					long arg3) {
 				System.out.println(arg2);
-				Intent myIntent = new Intent(SpreadsheetView.this,
+				Intent myIntent = new Intent(SpreadsheetActivity.this,
 						GamesActivity.class);
 				ArrayList<HashMap<String, String>> temp = new ArrayList<HashMap<String, String>>();
 				temp.addAll(myContent);
@@ -69,13 +53,30 @@ public class SpreadsheetView extends ListActivity implements
 					myIntent.putExtra("id", temp.get(arg2 - 2).get("id"));
 				}
 
-				SpreadsheetView.this.startActivity(myIntent);
+				SpreadsheetActivity.this.startActivity(myIntent);
 			}
 
 		});
 		mediator.setContentContainer(this);
 		mediator.downloadSpreadsheets();
+		getActionBarHelper().setRefreshActionItemState(true);
+	}
 
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.refresh:
+			mediator.refreshSheets();
+			getActionBarHelper().setRefreshActionItemState(true);
+		}
+		return super.onOptionsItemSelected(item);
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+		getMenuInflater().inflate(R.menu.activity_spreadsheets, menu);
+		return super.onCreateOptionsMenu(menu);
 	}
 
 	@Override
@@ -83,23 +84,24 @@ public class SpreadsheetView extends ListActivity implements
 		// TODO Auto-generated method stub
 		super.onResume();
 		if (!mediator.isLoggedIn()) {
-			AlertDialog ballarUr=new AlertDialog.Builder(this).create();
+			AlertDialog ballarUr = new AlertDialog.Builder(this).create();
 			ballarUr.setMessage("Utloggad");
 			ballarUr.setButton("OK", new DialogInterface.OnClickListener() {
-			   public void onClick(DialogInterface dialog, int which) {
-			      // here you can add functions
-				   finish();
-					Intent myIntent = new Intent(SpreadsheetView.this,
+				public void onClick(DialogInterface dialog, int which) {
+					// here you can add functions
+					finish();
+					Intent myIntent = new Intent(SpreadsheetActivity.this,
 							LoginActivity.class);
-					SpreadsheetView.this.startActivity(myIntent);
-			   }
+					SpreadsheetActivity.this.startActivity(myIntent);
+				}
 			});
 			ballarUr.show();
 		}
 	}
+
 	@Override
 	public void updateViewContent(ViewContent mode) {
-		
+
 		// TODO Auto-generated method stub
 		if (mode == ViewContent.SPREADSHEETS) {
 			myContent.clear();
@@ -155,6 +157,7 @@ public class SpreadsheetView extends ListActivity implements
 				System.out.println("notify");
 				((SeparatedListAdapter) getListAdapter())
 						.notifyDataSetChanged();
+				getActionBarHelper().setRefreshActionItemState(false);
 			}
 
 		}

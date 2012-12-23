@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
 
-import android.app.ListActivity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.NavUtils;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
@@ -14,58 +16,34 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.SimpleAdapter;
 
-import com.markupartist.android.widget.ActionBar;
-import com.markupartist.android.widget.ActionBar.Action;
+import com.cellr.noid.actionbar.ActionBarListActivity;
 import com.sharps.R;
 import com.sharps.Network.NetworkMediator;
 
-public class GamesActivity extends ListActivity implements NetworkContentContainer,
-		OnScrollListener {
+public class GamesActivity extends ActionBarListActivity implements
+		NetworkContentContainer, OnScrollListener {
 	private ArrayList<HashMap<String, String>> content = new ArrayList<HashMap<String, String>>();
 	private NetworkMediator mediator = NetworkMediator.getSingletonObject();
 	private String id;
-	private ActionBar actionBar;
 	boolean downloading = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.games_view);
-		
+
 		getListView().setOnScrollListener(this);
 		mediator.setContentContainer(this);
 		Intent i = getIntent();
 		id = i.getStringExtra("id");
-		actionBar = (ActionBar) findViewById(R.id.actionbar);
-		if (mediator.getLibrary().getMySheets().get(id)
-				.get("sheetGroup").equals("my")) {
-			actionBar.addAction(new Action() {
 
-				@Override
-				public void performAction(View view) {
-					// TODO Auto-generated method stub
-					Intent myIntent = new Intent(GamesActivity.this, AddGame.class);
-					myIntent.putExtra("id", id);
-					GamesActivity.this.startActivity(myIntent);
-				}
-
-				@Override
-				public int getDrawable() {
-					// TODO Auto-generated method stub
-					return R.drawable.ic_menu_add;
-				}
-			});
-		}
-		actionBar.setTitle(mediator.getLibrary().getMySheets().get(id)
-				.get("title"));
 		if (mediator.getLibrary().getGames().get(id) != null) {
 
 			for (Hashtable<String, String> hashtable : mediator.getLibrary()
 					.getGames().get(id)) {
 				HashMap<String, String> hashMap = new HashMap<String, String>();
-				hashMap.put("line1", hashtable.get("team1") + "-"
-						+ hashtable.get("team2"));
+				hashMap.put("line1",
+						hashtable.get("team1") + "-" + hashtable.get("team2"));
 				hashMap.put("line2", "Insats: " + hashtable.get("amount")
 						+ " Odds: " + hashtable.get("odds") + " Netto: "
 						+ hashtable.get("result"));
@@ -78,14 +56,14 @@ public class GamesActivity extends ListActivity implements NetworkContentContain
 		int[] to = { android.R.id.text1, android.R.id.text2 };
 
 		setListAdapter(new GameAdapter(this, content,
-				android.R.layout.simple_list_item_2, from, to,id));
+				android.R.layout.simple_list_item_2, from, to, id));
 		getListView().setOnItemClickListener(new OnItemClickListener() {
 
 			@Override
 			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
 					long arg3) {
-				// TODO Auto-generated method stub
-				Intent myIntent = new Intent(GamesActivity.this, ShowGameActivity.class);
+				Intent myIntent = new Intent(GamesActivity.this,
+						ShowGameDetailsActivity.class);
 				myIntent.putExtra("id", id);
 				myIntent.putExtra("index", arg2);
 				GamesActivity.this.startActivity(myIntent);
@@ -96,7 +74,6 @@ public class GamesActivity extends ListActivity implements NetworkContentContain
 
 	@Override
 	public void updateViewContent(ViewContent mode) {
-		// TODO Auto-generated method stub
 		if (mode == ViewContent.GAMES) {
 			System.out.println(mediator.getLibrary().getGames().get(id));
 			if (mediator.getLibrary().getGames().get(id) != null) {
@@ -118,12 +95,12 @@ public class GamesActivity extends ListActivity implements NetworkContentContain
 			int[] to = { android.R.id.text1, android.R.id.text2 };
 			if (getListAdapter() == null) {
 				setListAdapter(new GameAdapter(this, content,
-						android.R.layout.simple_list_item_2, from, to,id));
+						android.R.layout.simple_list_item_2, from, to, id));
 			} else {
 				System.out.println("notify " + content.size());
 				((SimpleAdapter) getListAdapter()).notifyDataSetChanged();
 				downloading = false;
-				actionBar.setProgressBarVisibility(View.GONE);
+				getActionBarHelper().setRefreshActionItemState(false);
 			}
 		}
 	}
@@ -131,7 +108,6 @@ public class GamesActivity extends ListActivity implements NetworkContentContain
 	@Override
 	public void onScroll(AbsListView view, int firstVisibleItem,
 			int visibleItemCount, int totalItemCount) {
-		// TODO Auto-generated method stub
 		boolean loadMore = false;
 		if (mediator.getLibrary().getMySheets().get(id) != null) {
 			loadMore = /* maybe add a padding */
@@ -144,14 +120,38 @@ public class GamesActivity extends ListActivity implements NetworkContentContain
 			downloading = true;
 			System.out.println("load more " + (content.size() + 1) / 10);
 			mediator.downloadNextGames(id);
-			actionBar.setProgressBarVisibility(View.VISIBLE);
+			getActionBarHelper().setRefreshActionItemState(true);
 		}
 	}
 
 	@Override
-	public void onScrollStateChanged(AbsListView view, int scrollState) {
-		// TODO Auto-generated method stub
+	public boolean onOptionsItemSelected(MenuItem item) {
 
+		switch (item.getItemId()) {
+		case android.R.id.home:
+			finish();
+			break;
+		case R.id.addGame:
+			Intent myIntent = new Intent(GamesActivity.this, AddGameActivity.class);
+			myIntent.putExtra("id", id);
+			startActivity(myIntent);
+			break;
+		}
+		return super.onOptionsItemSelected(item);
 	}
 
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+
+		// Inflate the menu; this adds items to the action bar if it is
+		// present.
+		getMenuInflater().inflate(R.menu.activity_add_game	, menu);
+
+		return super.onCreateOptionsMenu(menu);
+	}
+
+	@Override
+	public void onScrollStateChanged(AbsListView arg0, int arg1) {
+
+	}
 }

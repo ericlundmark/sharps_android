@@ -16,7 +16,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import com.sharps.R;
 import com.sharps.Network.NetworkMediator;
 
-public class SearchResultsView extends ListActivity implements Searchable {
+public class SearchResultsActivity extends ListActivity implements Searchable {
 	private NetworkMediator mediator = NetworkMediator.getSingletonObject();
 	private ArrayList<Hashtable<String, String>> result;
 	private ArrayList<HashMap<String, String>> content = new ArrayList<HashMap<String, String>>();

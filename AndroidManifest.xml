@@ -6,17 +6,18 @@
 
     <uses-sdk
         android:minSdkVersion="8"
-        android:targetSdkVersion="16" />
+        android:targetSdkVersion="17" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@android:style/Theme.Light.NoTitleBar" >
+        android:theme="@style/AppTheme" >
         <activity
-            android:name="com.sharps.main.SpreadsheetView"
+            android:name="com.sharps.main.SpreadsheetActivity"
             android:label="@string/app_name" >
         </activity>
         <activity
@@ -34,11 +35,11 @@
             android:label="@string/app_name" >
         </activity>
         <activity
-            android:name="com.sharps.main.ShowGameActivity"
+            android:name="com.sharps.main.ShowGameDetailsActivity"
             android:label="@string/app_name" >
         </activity>
         <activity
-            android:name="com.sharps.main.AddGame"
+            android:name="com.sharps.main.AddGameActivity"
             android:launchMode="singleTop"
             android:windowSoftInputMode="adjustPan" >
             <intent-filter>
@@ -51,11 +52,11 @@
             <!-- enable the base activity to send searches to itself -->
             <meta-data
                 android:name="android.app.default_searchable"
-                android:value=".main.AddGame"
+                android:value="com.sharps.main.AddGame"
                 android:windowSoftInputMode="adjustPan" />
         </activity>
         <activity
-            android:name="com.sharps.main.SearchResultsView"
+            android:name="com.sharps.main.SearchResultsActivity"
             android:windowSoftInputMode="adjustPan" >
         </activity>
     </application>

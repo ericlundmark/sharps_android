@@ -4,10 +4,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import android.app.ListActivity;
 import android.app.SearchManager;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.NavUtils;
+import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
@@ -16,12 +17,14 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 
+import com.cellr.noid.actionbar.ActionBarListActivity;
 import com.markupartist.android.widget.ActionBar;
 import com.markupartist.android.widget.ActionBar.Action;
 import com.sharps.R;
 import com.sharps.Network.NetworkMediator;
 
-public class AddGame extends ListActivity implements OnItemClickListener {
+public class AddGameActivity extends ActionBarListActivity implements
+		OnItemClickListener {
 	public static final int GET_SEARCH_RESULTS = 0;
 	String id;
 	private ListView myList;
@@ -64,19 +67,6 @@ public class AddGame extends ListActivity implements OnItemClickListener {
 		String mode = i.getStringExtra("mode");
 		Button button = (Button) findViewById(R.id.button1);
 		button.setOnClickListener(layGameButtonPushed);
-		ActionBar actionBar = (ActionBar) findViewById(R.id.actionbar);
-		actionBar.addAction(new Action() {
-
-			@Override
-			public void performAction(View view) {
-				onSearchRequested();
-			}
-
-			@Override
-			public int getDrawable() {
-				return R.drawable.ic_menu_search;
-			}
-		});
 		myList = (ListView) findViewById(android.R.id.list);
 		myList.setItemsCanFocus(true);
 		generateContent();
@@ -140,7 +130,7 @@ public class AddGame extends ListActivity implements OnItemClickListener {
 			String query = intent.getStringExtra(SearchManager.QUERY);
 			// manually launch the real search activity
 			final Intent searchIntent = new Intent(getApplicationContext(),
-					SearchResultsView.class);
+					SearchResultsActivity.class);
 			// add query to the Intent Extras
 			searchIntent.putExtra(SearchManager.QUERY, query);
 			startActivityForResult(searchIntent, GET_SEARCH_RESULTS);
@@ -156,6 +146,20 @@ public class AddGame extends ListActivity implements OnItemClickListener {
 		}
 
 	};
+
+	public boolean onOptionsItemSelected(android.view.MenuItem item) {
+		switch (item.getItemId()) {
+		case android.R.id.home:
+			finish();
+			break;
+		}
+		return super.onOptionsItemSelected(item);
+	};
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		return super.onCreateOptionsMenu(menu);
+	}
 
 	@Override
 	public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {

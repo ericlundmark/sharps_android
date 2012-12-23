@@ -4,7 +4,6 @@ import android.accounts.AccountManager;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -21,10 +20,11 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.cellr.noid.actionbar.ActionBarActivity;
 import com.sharps.R;
 import com.sharps.Network.NetworkMediator;
 
-public class LoginActivity extends Activity implements LoginListener {
+public class LoginActivity extends ActionBarActivity implements LoginListener {
 	private NetworkMediator mediator = NetworkMediator.getSingletonObject();
 	/**
 	 * A dummy authentication store containing known user names and passwords.
@@ -129,7 +129,7 @@ public class LoginActivity extends Activity implements LoginListener {
 		showProgress(false);
 		if (status) {
 			Intent myIntent = new Intent(LoginActivity.this,
-					SpreadsheetView.class);
+					SpreadsheetActivity.class);
 			LoginActivity.this.startActivity(myIntent);
 			finish();
 		} else {
