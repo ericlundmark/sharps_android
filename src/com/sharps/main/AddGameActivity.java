@@ -7,7 +7,6 @@ import java.util.HashMap;
 import android.app.SearchManager;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.NavUtils;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -18,8 +17,6 @@ import android.widget.EditText;
 import android.widget.ListView;
 
 import com.cellr.noid.actionbar.ActionBarListActivity;
-import com.markupartist.android.widget.ActionBar;
-import com.markupartist.android.widget.ActionBar.Action;
 import com.sharps.R;
 import com.sharps.Network.NetworkMediator;
 
