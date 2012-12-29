@@ -29,7 +29,6 @@ public class ShowGameDetailsActivity extends ActionBarListActivity {
 	}
 
 	private SQLiteDatabase database;
-	private MySQLiteHelper dbHelper;
 	private String[] allColumns = { MySQLiteHelper.COLUMN_TEAM1,
 			MySQLiteHelper.COLUMN_TEAM2, MySQLiteHelper.COLUMN_DATE,
 			MySQLiteHelper.COLUMN_TIME, MySQLiteHelper.COLUMN_SIGN,
@@ -49,6 +48,7 @@ public class ShowGameDetailsActivity extends ActionBarListActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.show_game);
+		database = ((MyApplication) getApplication()).getDatabase();
 		Intent intent = getIntent();
 		gameID = intent.getStringExtra("gameID");
 		sheetID = intent.getStringExtra("sheetID");
@@ -58,18 +58,12 @@ public class ShowGameDetailsActivity extends ActionBarListActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		if (database == null) {
-			dbHelper = new MySQLiteHelper(getApplicationContext());
-			database = dbHelper.getWritableDatabase();
-		}
 		SimpleAdapter adapter = new SimpleAdapter(getApplicationContext(),
 				getData(), R.layout.simple_list_item_2_black_text, from, to);
 		setListAdapter(adapter);
 	}
 
 	private ArrayList<HashMap<String, String>> getData() {
-		dbHelper = new MySQLiteHelper(getApplicationContext());
-		database = dbHelper.getWritableDatabase();
 		ArrayList<HashMap<String, String>> list = new ArrayList<HashMap<String, String>>();
 		Cursor cursor = database.query(MySQLiteHelper.TABLE_GAMES, allColumns,
 				selection, null, null, null, null);
@@ -85,14 +79,7 @@ public class ShowGameDetailsActivity extends ActionBarListActivity {
 			}
 		}
 		cursor.close();
-		database.close();
 		return list;
-	}
-
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		database.close();
 	}
 
 	@Override
@@ -118,8 +105,6 @@ public class ShowGameDetailsActivity extends ActionBarListActivity {
 	}
 
 	private void createDialog() {
-		dbHelper = new MySQLiteHelper(getApplicationContext());
-		database = dbHelper.getWritableDatabase();
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setTitle("Välj ett spreadsheet");
 
@@ -166,7 +151,6 @@ public class ShowGameDetailsActivity extends ActionBarListActivity {
 						.getColumnIndex(MySQLiteHelper.COLUMN_SHEETID));
 				intent.putExtra("sheetID", str);
 				intent.putExtra("gameID", gameID);
-				database.close();
 				dialog.dismiss();
 				startActivity(intent);
 			}
@@ -176,8 +160,6 @@ public class ShowGameDetailsActivity extends ActionBarListActivity {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		dbHelper = new MySQLiteHelper(getApplicationContext());
-		database = dbHelper.getWritableDatabase();
 		Cursor c = database.query(MySQLiteHelper.TABLE_SPREADSHEETS,
 				new String[] { MySQLiteHelper.COLUMN_OWNER,
 						MySQLiteHelper.COLUMN_SHEETID },
@@ -195,7 +177,6 @@ public class ShowGameDetailsActivity extends ActionBarListActivity {
 			getMenuInflater().inflate(R.menu.activity_games, menu);
 		}
 		c.close();
-		database.close();
 		return super.onCreateOptionsMenu(menu);
 	}
 }

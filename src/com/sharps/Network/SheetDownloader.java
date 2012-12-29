@@ -20,22 +20,19 @@ import org.xmlpull.v1.XmlPullParserFactory;
 
 import Database.MySQLiteHelper;
 import android.content.ContentValues;
-import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 public class SheetDownloader {
 	private SQLiteDatabase database;
-	private MySQLiteHelper dbHelper;
 	public static String MY = "1";
 	public static String FAVOURITE = "0";
 
 	private NetworkMediator mediator = NetworkMediator.getSingletonObject();
 	private String mode;
 
-	public SheetDownloader(Context context, String mode, String url) {
-		dbHelper = new MySQLiteHelper(context);
-		database = dbHelper.getWritableDatabase();
+	public SheetDownloader(SQLiteDatabase database, String mode, String url) {
+		this.database = database;
 		this.mode = mode;
 		startHttp(url);
 	}
@@ -121,6 +118,7 @@ public class SheetDownloader {
 							database.insert(MySQLiteHelper.TABLE_SPREADSHEETS,
 									null, values);
 						}
+						cursor.close();
 					}
 					break;
 				}
@@ -129,13 +127,9 @@ public class SheetDownloader {
 			}
 			// exception stuffs
 		} catch (XmlPullParserException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} finally {
-			database.close();
 		}
 	}
 

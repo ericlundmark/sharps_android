@@ -2,6 +2,7 @@ package com.sharps.Network;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Observable;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
@@ -18,23 +19,21 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
-import com.sharps.main.GamesActivity;
-
 import Database.MySQLiteHelper;
 import android.content.ContentValues;
-import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-public class GamesDownloader {
+import com.sharps.main.GamesActivity;
+
+public class GamesDownloader extends Observable{
 	private NetworkMediator mediator = NetworkMediator.getSingletonObject();
 	private SQLiteDatabase database;
-	private MySQLiteHelper dbHelper;
-	private int amountAdded=0;
-	public GamesDownloader(Context context, String URL) {
+	private int amountAdded = 0;
 
-		dbHelper = new MySQLiteHelper(context);
-		database = dbHelper.getWritableDatabase();
+	public GamesDownloader(SQLiteDatabase database, String URL) {
+
+		this.database = database;
 		String str = "";
 		try {
 			HttpParams httpParameters = new BasicHttpParams();
@@ -153,11 +152,12 @@ public class GamesDownloader {
 							amountAdded++;
 							database.update(MySQLiteHelper.TABLE_GAMES, values,
 									selection, null);
-						} else if(values.size()>0){
+						} else if (values.size() > 0) {
 							amountAdded++;
 							database.insert(MySQLiteHelper.TABLE_GAMES, null,
 									values);
 						}
+						cursor.close();
 
 					}
 					break;
@@ -171,10 +171,10 @@ public class GamesDownloader {
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
-			if (amountAdded==0) {
-				GamesActivity.isLastPageReched=true;
+			if (amountAdded == 0) {
+				GamesActivity.isLastPageReched = true;
 			}
-			database.close();
+			notifyObservers(amountAdded);
 		}
 	}
 

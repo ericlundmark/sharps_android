@@ -14,7 +14,6 @@ import android.widget.AdapterView.OnItemClickListener;
 
 import com.cellr.noid.actionbar.ActionBarListActivity;
 import com.sharps.R;
-import com.sharps.SettingsActivity;
 import com.sharps.Network.NetworkMediator;
 import com.sharps.Network.SheetDownloader;
 
@@ -24,7 +23,6 @@ public class SpreadsheetActivity extends ActionBarListActivity implements
 	public final static String CATEGORY_MY_FAVOURITES = "Mina favoriter";
 	NetworkMediator mediator = NetworkMediator.getSingletonObject();
 	private SQLiteDatabase database;
-	private MySQLiteHelper dbHelper;
 	private String[] allColumns = { MySQLiteHelper.COLUMN_TITLE,
 			MySQLiteHelper.COLUMN_ROI, MySQLiteHelper.COLUMN_SHEETID,
 			MySQLiteHelper.COLUMN_ID, MySQLiteHelper.COLUMN_OWNER,
@@ -38,6 +36,7 @@ public class SpreadsheetActivity extends ActionBarListActivity implements
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.spreadsheets_view);
+		database = ((MyApplication) getApplication()).getDatabase();
 		// You can also assign the title programmatically by passing a
 		// CharSequence or resource id.
 		// actionBar.setTitle(R.string.some_title);
@@ -49,8 +48,6 @@ public class SpreadsheetActivity extends ActionBarListActivity implements
 	@Override
 	protected void onResume() {
 		super.onResume();
-		dbHelper = new MySQLiteHelper(getApplicationContext());
-		database = dbHelper.getWritableDatabase();
 		SeparatedListAdapter adapter = new SeparatedListAdapter(
 				getApplicationContext());
 		cursor = database
@@ -100,7 +97,6 @@ public class SpreadsheetActivity extends ActionBarListActivity implements
 		};
 		adapter.addSection(CATEGORY_MY_FAVOURITES, temp);
 		setListAdapter(adapter);
-		database.close();
 	}
 
 	@Override
@@ -136,18 +132,16 @@ public class SpreadsheetActivity extends ActionBarListActivity implements
 
 			@Override
 			public void run() {
-				new SheetDownloader(getApplicationContext(),
+				new SheetDownloader(database,
 						SheetDownloader.MY,
 						"http://www.sharps.se/forums/includes/ss/app_mysheets.php");
-				new SheetDownloader(getApplicationContext(),
+				new SheetDownloader(database,
 						SheetDownloader.FAVOURITE,
 						"http://www.sharps.se/forums/includes/ss/app_favsheets.php");
 				runOnUiThread(new Runnable() {
 
 					@Override
 					public void run() {
-						dbHelper = new MySQLiteHelper(getApplicationContext());
-						database = dbHelper.getWritableDatabase();
 						cursor = database.query(
 								MySQLiteHelper.TABLE_SPREADSHEETS, allColumns,
 								MySQLiteHelper.COLUMN_OWNER + " = 1", null,
@@ -165,7 +159,6 @@ public class SpreadsheetActivity extends ActionBarListActivity implements
 						((SeparatedListAdapter) getListAdapter())
 								.notifyDataSetChanged();
 						getActionBarHelper().setRefreshActionItemState(false);
-						database.close();
 					}
 				});
 

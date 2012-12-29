@@ -23,7 +23,6 @@ public class GamesActivity extends ActionBarListActivity implements
 	private String sheetID;
 	private Cursor cursor;
 	private SQLiteDatabase database;
-	private MySQLiteHelper dbHelper;
 	private String[] allColumns = { MySQLiteHelper.COLUMN_TEAM1,
 			MySQLiteHelper.COLUMN_TEAM2, MySQLiteHelper.COLUMN_DATE,
 			MySQLiteHelper.COLUMN_TIME, MySQLiteHelper.COLUMN_SIGN,
@@ -41,6 +40,7 @@ public class GamesActivity extends ActionBarListActivity implements
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.games_view);
+		database = ((MyApplication) getApplication()).getDatabase();
 		Intent i = getIntent();
 		sheetID = i.getStringExtra("sheetID");
 		selection = MySQLiteHelper.COLUMN_SHEETID + " = " + sheetID;
@@ -51,8 +51,6 @@ public class GamesActivity extends ActionBarListActivity implements
 	@Override
 	protected void onResume() {
 		super.onResume();
-		dbHelper = new MySQLiteHelper(getApplicationContext());
-		database = dbHelper.getWritableDatabase();
 		int[] to = { android.R.id.text1, android.R.id.text2 };
 		cursor = database.query(MySQLiteHelper.TABLE_GAMES, allColumns,
 				selection, null, null, null, orderBy);
@@ -78,13 +76,12 @@ public class GamesActivity extends ActionBarListActivity implements
 
 		};
 		setListAdapter(adapter);
-		database.close();
 	}
 
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		isLastPageReched=false;
+		isLastPageReched = false;
 		cursor.close();
 	}
 
@@ -110,7 +107,7 @@ public class GamesActivity extends ActionBarListActivity implements
 
 			@Override
 			public void run() {
-				new GamesDownloader(getApplicationContext(),
+				new GamesDownloader(database,
 						"http://www.sharps.se/forums/includes/ss/app_games.php?ssid="
 								+ sheetID + "&page=" + page);
 				runOnUiThread(new Runnable() {
@@ -119,16 +116,12 @@ public class GamesActivity extends ActionBarListActivity implements
 					public void run() {
 
 						if (getListAdapter() != null) {
-							dbHelper = new MySQLiteHelper(
-									getApplicationContext());
-							database = dbHelper.getWritableDatabase();
 							cursor = database.query(MySQLiteHelper.TABLE_GAMES,
 									allColumns, selection, null, null, null,
 									orderBy);
 							((ShowGamesAdapter) getListAdapter())
 									.changeCursor(cursor);
 							setProgressBarIndeterminateVisibility(false);
-							database.close();
 							downloading = false;
 						}
 
@@ -159,8 +152,6 @@ public class GamesActivity extends ActionBarListActivity implements
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		dbHelper = new MySQLiteHelper(getApplicationContext());
-		database = dbHelper.getWritableDatabase();
 		Cursor c = database.query(MySQLiteHelper.TABLE_SPREADSHEETS,
 				new String[] { MySQLiteHelper.COLUMN_OWNER,
 						MySQLiteHelper.COLUMN_SHEETID },
@@ -169,7 +160,6 @@ public class GamesActivity extends ActionBarListActivity implements
 		c.moveToFirst();
 		String str = c.getString(c.getColumnIndex(MySQLiteHelper.COLUMN_OWNER));
 		c.close();
-		database.close();
 		// Inflate the menu; this adds items to the action bar if it is
 		// present.
 		if (str.equals("1")) {

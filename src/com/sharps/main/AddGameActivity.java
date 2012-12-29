@@ -34,7 +34,6 @@ public class AddGameActivity extends ActionBarListActivity implements
 	private String[] from = { "line1", "line2" };
 	private int[] to = { R.id.edit_text, android.R.id.text2 };
 	private SQLiteDatabase database;
-	private MySQLiteHelper dbHelper;
 	private String[] allColumns = { MySQLiteHelper.COLUMN_TEAM1,
 			MySQLiteHelper.COLUMN_TEAM2, MySQLiteHelper.COLUMN_DATE,
 			MySQLiteHelper.COLUMN_TIME, MySQLiteHelper.COLUMN_SIGN,
@@ -51,6 +50,7 @@ public class AddGameActivity extends ActionBarListActivity implements
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_add_game);
+		database = ((MyApplication) getApplication()).getDatabase();
 		myList = (ListView) findViewById(android.R.id.list);
 		myList.setItemsCanFocus(true);
 		Intent intent = getIntent();
@@ -84,8 +84,6 @@ public class AddGameActivity extends ActionBarListActivity implements
 	}
 
 	private ArrayList<HashMap<String, String>> getData() {
-		dbHelper = new MySQLiteHelper(getApplicationContext());
-		database = dbHelper.getWritableDatabase();
 		ArrayList<HashMap<String, String>> list = new ArrayList<HashMap<String, String>>();
 		Cursor cursor = database.query(MySQLiteHelper.TABLE_GAMES, allColumns,
 				selection, null, null, null, null);
@@ -101,7 +99,6 @@ public class AddGameActivity extends ActionBarListActivity implements
 			}
 		}
 		cursor.close();
-		database.close();
 		return list;
 	}
 

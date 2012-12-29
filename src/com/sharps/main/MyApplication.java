@@ -2,6 +2,7 @@ package com.sharps.main;
 
 import Database.MySQLiteHelper;
 import android.app.Application;
+import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 
 public class MyApplication extends Application {
@@ -12,6 +13,7 @@ public class MyApplication extends Application {
 	public void onCreate() {
 		dbHelper = new MySQLiteHelper(getApplicationContext());
 		database = dbHelper.getWritableDatabase();
+		startService(new Intent(this, SyncService.class));
 	}
 
 	public SQLiteDatabase getDatabase() {
