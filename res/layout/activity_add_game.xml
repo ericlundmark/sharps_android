@@ -16,5 +16,11 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text="Lägg spel" />
+    <ListView
+        android:id="@+id/searchResultsList"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone" >
+    </ListView>
 
 </LinearLayout>

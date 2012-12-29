@@ -1,11 +1,8 @@
 package com.sharps.main;
 
-import android.accounts.AccountManager;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -26,12 +23,6 @@ import com.sharps.Network.NetworkMediator;
 
 public class LoginActivity extends ActionBarActivity implements LoginListener {
 	private NetworkMediator mediator = NetworkMediator.getSingletonObject();
-	/**
-	 * A dummy authentication store containing known user names and passwords.
-	 * TODO: remove after connecting to a real authentication system.
-	 */
-	private static final String[] DUMMY_CREDENTIALS = new String[] {
-			"foo@example.com:hello", "bar@example.com:world" };
 
 	/**
 	 * The default email to populate the email field with.
@@ -48,19 +39,14 @@ public class LoginActivity extends ActionBarActivity implements LoginListener {
 	private View mLoginStatusView;
 	private TextView mLoginStatusMessageView;
 	private CheckBox box;
-	private ProgressDialog dialog;
-	private AlertDialog ballarUr;
-	private AccountManager accountManager;
 	private SharedPreferences sp1 = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_login);
 		mediator.setLoginListener(this);
 		box = (CheckBox) findViewById(R.id.checkBox1);
-		ballarUr = new AlertDialog.Builder(this).create();
 		// Set up the login form.
 		mEmail = getIntent().getStringExtra(EXTRA_EMAIL);
 		mEmailView = (EditText) findViewById(R.id.email);
@@ -98,6 +84,8 @@ public class LoginActivity extends ActionBarActivity implements LoginListener {
 						attemptLogin();
 					}
 				});
+		mEmailView.setText("luntfen");
+		mPasswordView.setText("ERIlun849");
 	}
 
 	public Context getContext() {

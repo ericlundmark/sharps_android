@@ -1,15 +1,7 @@
 package com.sharps.Network;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Hashtable;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
@@ -22,48 +14,45 @@ import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
 
-import com.sharps.main.ViewContent;
+import Database.MySQLiteHelper;
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 
-import android.os.AsyncTask;
-
-public class SheetDownloader extends
-		AsyncTask<String, Integer, HashMap<String, Hashtable<String, String>>> {
-	public enum RequestMode {
-		FAVOURITE, MY
-	}
+public class SheetDownloader {
+	private SQLiteDatabase database;
+	private MySQLiteHelper dbHelper;
+	public static String MY = "1";
+	public static String FAVOURITE = "0";
 
 	private NetworkMediator mediator = NetworkMediator.getSingletonObject();
-	private RequestMode mode;
+	private String mode;
 
-	public SheetDownloader(RequestMode reqEnum, String url) {
-		// TODO Auto-generated constructor stub
-		execute(url);
-		mode = reqEnum;
+	public SheetDownloader(Context context, String mode, String url) {
+		dbHelper = new MySQLiteHelper(context);
+		database = dbHelper.getWritableDatabase();
+		this.mode = mode;
+		startHttp(url);
 	}
 
-	@Override
-	protected HashMap<String, Hashtable<String, String>> doInBackground(
-			String... params) {
-		// TODO Auto-generated method stub
-		System.out.println(params[0]);
+	private void startHttp(String url) {
 		String str = "";
-
 		try {
 			HttpParams httpParameters = new BasicHttpParams();
 			int timeoutConnection = 3000;
-			HttpConnectionParams.setConnectionTimeout(httpParameters, timeoutConnection);
-			// Set the default socket timeout (SO_TIMEOUT) 
+			HttpConnectionParams.setConnectionTimeout(httpParameters,
+					timeoutConnection);
+			// Set the default socket timeout (SO_TIMEOUT)
 			// in milliseconds which is the timeout for waiting for data.
 			int timeoutSocket = 3000;
 			HttpConnectionParams.setSoTimeout(httpParameters, timeoutSocket);
 			HttpClient hc = new DefaultHttpClient(httpParameters);
-			HttpGet post = new HttpGet(params[0]);
+			HttpGet post = new HttpGet(url);
 			// Create local HTTP context
 			HttpContext localContext = new BasicHttpContext();
 			// Bind custom cookie store to the local context
@@ -71,143 +60,92 @@ public class SheetDownloader extends
 					mediator.getCockies());
 			ResponseHandler<String> responseHandler = new BasicResponseHandler();
 			str = hc.execute(post, responseHandler, localContext);
-			System.out.println("Inkommande: " + str);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return decodeResponse(str);
-	}
-
-	@Override
-	protected void onPostExecute(
-			HashMap<String, Hashtable<String, String>> result) {
-		// TODO Auto-generated method stub
-		super.onPostExecute(result);
-		// if(mode==RequestMode.MY){
-		mediator.getLibrary().getMySheets().putAll(result);
-		mediator.notifyContentContainers(ViewContent.SPREADSHEETS);
-		// }
+		decodeResponse(str);
 
 	}
 
-	private HashMap<String, Hashtable<String, String>> decodeResponse(String str) {
-		// TODO Auto-generated method stub
-		HashMap<String, Hashtable<String, String>> decoded = new HashMap<String, Hashtable<String, String>>();
+	private void decodeResponse(String str) {
 		try {
-			DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory
-					.newInstance();
-			DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
-			InputSource is = new InputSource(new StringReader(str));
-			org.w3c.dom.Document doc = docBuilder.parse(is);
-			// normalize text representation
-			doc.getDocumentElement().normalize();
-			//System.out.println("Root element of the doc is "
-			//		+ doc.getDocumentElement().getNodeName());
-			NodeList listOfEvents = doc.getElementsByTagName("sheet");
-			int totalPersons = listOfEvents.getLength();
-			//System.out.println("Total no of sheets : " + totalPersons);
+			XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+			factory.setNamespaceAware(true);
+			XmlPullParser parser = factory.newPullParser();
+			parser.setInput(new StringReader(str));
+			int eventType = parser.getEventType();
+			ContentValues values = new ContentValues();
+			while (eventType != XmlPullParser.END_DOCUMENT) {
+				switch (eventType) {
 
-			for (int s = 0; s < listOfEvents.getLength(); s++) {
-				Node eventNode = listOfEvents.item(s);
-				if (eventNode.getNodeType() == Node.ELEMENT_NODE) {
-
-					Element eventElement = (Element) eventNode;
-
-					// -------
-					NodeList firstNameList = eventElement
-							.getElementsByTagName("id");
-					Element firstNameElement = (Element) firstNameList.item(0);
-
-					NodeList textFNList = firstNameElement.getChildNodes();
-					String id = ((Node) textFNList.item(0)).getNodeValue()
-							.trim();
-					//System.out.println("id : " + id);
-					if (decoded.get(id) == null) {
-						decoded.put(id, new Hashtable<String, String>());
-						decoded.get(id).put("id", id);
+				// at start of a tag: START_TAG
+				case XmlPullParser.START_TAG:
+					// get tag name
+					String tagName = parser.getName();
+					// if <study>, get attribute: 'id'
+					if (tagName.equalsIgnoreCase("title")) {
+						values.put(MySQLiteHelper.COLUMN_TITLE,
+								readText(parser));
+					} else if (tagName.equalsIgnoreCase("roi")) {
+						values.put(MySQLiteHelper.COLUMN_ROI, readText(parser));
+					} else if (tagName.equalsIgnoreCase("id")) {
+						values.put(MySQLiteHelper.COLUMN_SHEETID,
+								readText(parser));
+					} else if (tagName.equalsIgnoreCase("lastadded")) {
+						values.put(MySQLiteHelper.COLUMN_LAST_ADDED,
+								readText(parser));
+					} else if (tagName.equalsIgnoreCase("games")) {
+						values.put(MySQLiteHelper.COLUMN_NUMBER_OF_GAMES,
+								readText(parser));
 					}
-
-					// -------
-					NodeList lastNameList = eventElement
-							.getElementsByTagName("roi");
-					Element lastNameElement = (Element) lastNameList.item(0);
-
-					NodeList textLNList = lastNameElement.getChildNodes();
-					String roi;
-					if (textLNList.item(0) != null) {
-						roi = ((Node) textLNList.item(0)).getNodeValue().trim();
-					} else {
-						roi = "Not specified";
+					// if <content>
+					else if (tagName.equalsIgnoreCase("sheet")) {
+						values.clear();
 					}
-					decoded.get(id).put("roi", roi);
-					// -------
-					NodeList lastAddedList = eventElement
-							.getElementsByTagName("lastadded");
-					Element lastAddedElement = (Element) lastAddedList.item(0);
-
-					NodeList textLAList = lastAddedElement.getChildNodes();
-					String lastAdded;
-					if (textLAList.item(0) != null) {
-						lastAdded = ((Node) textLAList.item(0)).getNodeValue().trim();
-					} else {
-						lastAdded = "Not specified";
+					break;
+				case XmlPullParser.END_TAG:
+					tagName = parser.getName();
+					if (tagName.equalsIgnoreCase("sheet")) {
+						values.put(MySQLiteHelper.COLUMN_OWNER, mode);
+						String selection = MySQLiteHelper.COLUMN_SHEETID
+								+ " = "
+								+ values.getAsString(MySQLiteHelper.COLUMN_SHEETID);
+						Cursor cursor = database.query(
+								MySQLiteHelper.TABLE_SPREADSHEETS,
+								new String[] { MySQLiteHelper.COLUMN_SHEETID },
+								selection, null, null, null, null);
+						if (cursor.getCount() > 0) {
+							database.update(MySQLiteHelper.TABLE_SPREADSHEETS,
+									values, selection, null);
+						} else {
+							database.insert(MySQLiteHelper.TABLE_SPREADSHEETS,
+									null, values);
+						}
 					}
-					decoded.get(id).put("lastadded", lastAdded);
-
-					// -------
-
-					NodeList titleNameList = eventElement
-							.getElementsByTagName("title");
-					Element titleNameElement = (Element) titleNameList.item(0);
-
-					NodeList textTitleList = titleNameElement.getChildNodes();
-					String title;
-					if (textTitleList.item(0) != null) {
-						title = ((Node) textTitleList.item(0)).getNodeValue()
-								.trim();
-					} else {
-						title = "Not specified";
-					}
-					decoded.get(id).put("title", title);
-					// -------
-
-					NodeList numbOfGamesList = eventElement
-							.getElementsByTagName("games");
-					Element numbOfGamesElement = (Element) numbOfGamesList
-							.item(0);
-
-					NodeList textNumbOfGamesList = numbOfGamesElement
-							.getChildNodes();
-					String numberOfGames;
-					if (textNumbOfGamesList.item(0) != null) {
-						numberOfGames = ((Node) textNumbOfGamesList.item(0))
-								.getNodeValue().trim();
-					} else {
-						numberOfGames = "Not specified";
-					}
-					decoded.get(id).put("numberOfGames", numberOfGames);
-					if (mode==RequestMode.MY) {
-						decoded.get(id).put("sheetGroup", "my");
-					} else {
-						decoded.get(id).put("sheetGroup", "fav");
-					}
-
-				}// end of if clause
-
-			}// end of for loop with s var
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SAXException e) {
+					break;
+				}
+				// jump to next event
+				eventType = parser.next();
+			}
+			// exception stuffs
+		} catch (XmlPullParserException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (ParserConfigurationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} finally {
+			database.close();
 		}
-		return decoded;
+	}
+
+	private String readText(XmlPullParser parser) throws IOException,
+			XmlPullParserException {
+		String result = "";
+		if (parser.next() == XmlPullParser.TEXT) {
+			result = parser.getText();
+			parser.nextTag();
+		}
+		return result;
 	}
 }

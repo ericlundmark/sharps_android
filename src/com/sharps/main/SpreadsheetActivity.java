@@ -1,15 +1,11 @@
 package com.sharps.main;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-
-import android.app.AlertDialog;
-import android.content.DialogInterface;
+import Database.MySQLiteHelper;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Color;
 import android.os.Bundle;
-import android.support.v4.app.NavUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -18,15 +14,24 @@ import android.widget.AdapterView.OnItemClickListener;
 
 import com.cellr.noid.actionbar.ActionBarListActivity;
 import com.sharps.R;
+import com.sharps.SettingsActivity;
 import com.sharps.Network.NetworkMediator;
+import com.sharps.Network.SheetDownloader;
 
 public class SpreadsheetActivity extends ActionBarListActivity implements
-		NetworkContentContainer {
+		OnItemClickListener {
+	public final static String CATEGORY_MY_SPREADSHEETS = "Mina spreadsheets";
+	public final static String CATEGORY_MY_FAVOURITES = "Mina favoriter";
 	NetworkMediator mediator = NetworkMediator.getSingletonObject();
-	private ArrayList<HashMap<String, String>> myContent = new ArrayList<HashMap<String, String>>();
-	private ArrayList<HashMap<String, String>> favContent = new ArrayList<HashMap<String, String>>();
-	public final static String ITEM_TITLE = "title";
-	public final static String ITEM_CAPTION = "caption";
+	private SQLiteDatabase database;
+	private MySQLiteHelper dbHelper;
+	private String[] allColumns = { MySQLiteHelper.COLUMN_TITLE,
+			MySQLiteHelper.COLUMN_ROI, MySQLiteHelper.COLUMN_SHEETID,
+			MySQLiteHelper.COLUMN_ID, MySQLiteHelper.COLUMN_OWNER,
+			MySQLiteHelper.COLUMN_LAST_ADDED };
+	private Cursor cursor;
+	private int[] to = { android.R.id.text1, android.R.id.text2 };
+	private String orderBy = MySQLiteHelper.COLUMN_LAST_ADDED + " DESC ";
 
 	/** Called when the activity is first created. */
 	@Override
@@ -36,38 +41,85 @@ public class SpreadsheetActivity extends ActionBarListActivity implements
 		// You can also assign the title programmatically by passing a
 		// CharSequence or resource id.
 		// actionBar.setTitle(R.string.some_title);
-		getListView().setOnItemClickListener(new OnItemClickListener() {
+		getListView().setOnItemClickListener(this);
+		downloadSpreadsheets();
+		getActionBarHelper().setRefreshActionItemState(true);
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		dbHelper = new MySQLiteHelper(getApplicationContext());
+		database = dbHelper.getWritableDatabase();
+		SeparatedListAdapter adapter = new SeparatedListAdapter(
+				getApplicationContext());
+		cursor = database
+				.query(MySQLiteHelper.TABLE_SPREADSHEETS, allColumns,
+						MySQLiteHelper.COLUMN_OWNER + " = 1", null, null, null,
+						orderBy);
+		MyAdapter temp = new MyAdapter(getApplicationContext(),
+				R.layout.simple_list_item_2_black_text, cursor, allColumns, to,
+				0) {
 
 			@Override
-			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
-					long arg3) {
-				System.out.println(arg2);
-				Intent myIntent = new Intent(SpreadsheetActivity.this,
-						GamesActivity.class);
-				ArrayList<HashMap<String, String>> temp = new ArrayList<HashMap<String, String>>();
-				temp.addAll(myContent);
-				temp.addAll(favContent);
-				if (arg2 < myContent.size() + 1) {
-					myIntent.putExtra("id", temp.get(arg2 - 1).get("id"));
+			public int getColor(Cursor c) {
+				String str = c.getString(c
+						.getColumnIndex(MySQLiteHelper.COLUMN_ROI));
+				double d = Double.parseDouble(str);
+				if (d >= 100) {
+					return Color.GREEN;
+				} else if (d < 100 && d != 0) {
+					return Color.RED;
 				} else {
-					myIntent.putExtra("id", temp.get(arg2 - 2).get("id"));
+					return Color.GRAY;
 				}
-
-				SpreadsheetActivity.this.startActivity(myIntent);
 			}
+		};
+		adapter.addSection(CATEGORY_MY_SPREADSHEETS, temp);
+		cursor = database
+				.query(MySQLiteHelper.TABLE_SPREADSHEETS, allColumns,
+						MySQLiteHelper.COLUMN_OWNER + " = 0", null, null, null,
+						orderBy);
+		temp = new MyAdapter(getApplicationContext(),
+				R.layout.simple_list_item_2_black_text, cursor, allColumns, to,
+				0) {
 
-		});
-		mediator.setContentContainer(this);
-		mediator.downloadSpreadsheets();
-		getActionBarHelper().setRefreshActionItemState(true);
+			@Override
+			public int getColor(Cursor c) {
+				String str = c.getString(c
+						.getColumnIndex(MySQLiteHelper.COLUMN_ROI));
+				double d = Double.parseDouble(str);
+				if (d >= 100) {
+					return Color.GREEN;
+				} else if (d < 100 && d != 0) {
+					return Color.RED;
+				} else {
+					return Color.GRAY;
+				}
+			}
+		};
+		adapter.addSection(CATEGORY_MY_FAVOURITES, temp);
+		setListAdapter(adapter);
+		database.close();
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		cursor.close();
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
-		case R.id.refresh:
-			mediator.refreshSheets();
+		case R.id.menu_refresh:
 			getActionBarHelper().setRefreshActionItemState(true);
+			downloadSpreadsheets();
+			break;
+		case R.id.menu_settings:
+			Intent intent = new Intent(getApplicationContext(),
+					SettingsActivity.class);
+			startActivity(intent);
 		}
 		return super.onOptionsItemSelected(item);
 	}
@@ -79,87 +131,58 @@ public class SpreadsheetActivity extends ActionBarListActivity implements
 		return super.onCreateOptionsMenu(menu);
 	}
 
-	@Override
-	protected void onResume() {
-		// TODO Auto-generated method stub
-		super.onResume();
-		if (!mediator.isLoggedIn()) {
-			AlertDialog ballarUr = new AlertDialog.Builder(this).create();
-			ballarUr.setMessage("Utloggad");
-			ballarUr.setButton("OK", new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int which) {
-					// here you can add functions
-					finish();
-					Intent myIntent = new Intent(SpreadsheetActivity.this,
-							LoginActivity.class);
-					SpreadsheetActivity.this.startActivity(myIntent);
-				}
-			});
-			ballarUr.show();
-		}
-	}
+	private synchronized void downloadSpreadsheets() {
+		new Thread(new Runnable() {
 
-	@Override
-	public void updateViewContent(ViewContent mode) {
+			@Override
+			public void run() {
+				new SheetDownloader(getApplicationContext(),
+						SheetDownloader.MY,
+						"http://www.sharps.se/forums/includes/ss/app_mysheets.php");
+				new SheetDownloader(getApplicationContext(),
+						SheetDownloader.FAVOURITE,
+						"http://www.sharps.se/forums/includes/ss/app_favsheets.php");
+				runOnUiThread(new Runnable() {
 
-		// TODO Auto-generated method stub
-		if (mode == ViewContent.SPREADSHEETS) {
-			myContent.clear();
-			favContent.clear();
-			if (mediator.getLibrary().getMySheets().size() != 0) {
-				for (String key : mediator.getLibrary().getMySheets().keySet()) {
-					HashMap<String, String> hashMap = new HashMap<String, String>();
-					hashMap.put(ITEM_TITLE, mediator.getLibrary().getMySheets()
-							.get(key).get("title"));
-					hashMap.put(ITEM_CAPTION, mediator.getLibrary()
-							.getMySheets().get(key).get("roi")
-							+ "%");
-					hashMap.put("id", key);
-					if (mediator.getLibrary().getMySheets().get(key)
-							.get("sheetGroup").equals("my")) {
-						myContent.add(hashMap);
-					} else {
-						favContent.add(hashMap);
-					}
-
-				}
-
-				Comparator<HashMap<String, String>> com = new Comparator<HashMap<String, String>>() {
 					@Override
-					public int compare(HashMap<String, String> lhs,
-							HashMap<String, String> rhs) {
-						// TODO Auto-generated method stub
-						String s = mediator.getLibrary().getMySheets()
-								.get(lhs.get("id")).get("lastadded");
-						String p = mediator.getLibrary().getMySheets()
-								.get(rhs.get("id")).get("lastadded");
-						return Integer.parseInt(p) - Integer.parseInt(s);
+					public void run() {
+						dbHelper = new MySQLiteHelper(getApplicationContext());
+						database = dbHelper.getWritableDatabase();
+						cursor = database.query(
+								MySQLiteHelper.TABLE_SPREADSHEETS, allColumns,
+								MySQLiteHelper.COLUMN_OWNER + " = 1", null,
+								null, null, orderBy);
+						((MyAdapter) ((SeparatedListAdapter) getListAdapter()).sections
+								.get(CATEGORY_MY_SPREADSHEETS))
+								.changeCursor(cursor);
+						cursor = database.query(
+								MySQLiteHelper.TABLE_SPREADSHEETS, allColumns,
+								MySQLiteHelper.COLUMN_OWNER + " = 0", null,
+								null, null, orderBy);
+						((MyAdapter) ((SeparatedListAdapter) getListAdapter()).sections
+								.get(CATEGORY_MY_FAVOURITES))
+								.changeCursor(cursor);
+						((SeparatedListAdapter) getListAdapter())
+								.notifyDataSetChanged();
+						getActionBarHelper().setRefreshActionItemState(false);
+						database.close();
 					}
-				};
-				Collections.sort(myContent, com);
-				Collections.sort(favContent, com);
+				});
 
 			}
-			if (getListAdapter() == null) {
-				SeparatedListAdapter adapter = new SeparatedListAdapter(this);
-				adapter.addSection("Mina sheets", new CustomAdapter(this,
-						myContent, R.layout.list_complex, new String[] {
-								ITEM_TITLE, ITEM_CAPTION }, new int[] {
-								R.id.list_complex_title,
-								R.id.list_complex_caption }));
-				adapter.addSection("Favorit sheets", new CustomAdapter(this,
-						favContent, R.layout.list_complex, new String[] {
-								ITEM_TITLE, ITEM_CAPTION }, new int[] {
-								R.id.list_complex_title,
-								R.id.list_complex_caption }));
-				setListAdapter(adapter);
-			} else {
-				System.out.println("notify");
-				((SeparatedListAdapter) getListAdapter())
-						.notifyDataSetChanged();
-				getActionBarHelper().setRefreshActionItemState(false);
-			}
+		}).start();
 
-		}
 	}
+
+	@Override
+	public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
+		Intent intent = new Intent(SpreadsheetActivity.this,
+				GamesActivity.class);
+		Cursor c = (Cursor) getListAdapter().getItem(arg2);
+		String str = c.getString(c
+				.getColumnIndex(MySQLiteHelper.COLUMN_SHEETID));
+		intent.putExtra("sheetID", str);
+		startActivity(intent);
+	}
+
 }

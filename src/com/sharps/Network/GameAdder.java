@@ -16,28 +16,41 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 
+import Database.MySQLiteHelper;
+
 public class GameAdder extends Thread {
 	private ArrayList<String> myItems;
 	private String id;
 	private NetworkMediator mediator = NetworkMediator.getSingletonObject();
+	private String[] allColumns = { MySQLiteHelper.COLUMN_TEAM1,
+			MySQLiteHelper.COLUMN_TEAM2, MySQLiteHelper.COLUMN_DATE,
+			MySQLiteHelper.COLUMN_TIME, MySQLiteHelper.COLUMN_SIGN,
+			MySQLiteHelper.COLUMN_SIGN2, MySQLiteHelper.COLUMN_SPORT,
+			MySQLiteHelper.COLUMN_COUNTRY, MySQLiteHelper.COLUMN_LEAGUE,
+			MySQLiteHelper.COLUMN_COMPANY, MySQLiteHelper.COLUMN_PERIOD,
+			MySQLiteHelper.COLUMN_INFO, MySQLiteHelper.COLUMN_REKARE,
+			MySQLiteHelper.COLUMN_AMOUNT, MySQLiteHelper.COLUMN_ODDS,
+			MySQLiteHelper.COLUMN_LIVE, MySQLiteHelper.COLUMN_LOCKED,
+			MySQLiteHelper.COLUMN_RESULT, MySQLiteHelper.COLUMN_ALIVE };
+	private String[] keys = { "team1", "team2", "date", "time", "sign",
+			"sign2", "sport", "country", "league", "bolag", "period", "info",
+			"rekare", "amount", "odds", "result" };
 	public GameAdder(ArrayList<String> myItems, String id) {
 		super();
-		// TODO Auto-generated constructor stub
 		this.myItems=myItems;
 		this.id=id;
 	}
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
 		super.run();
 		String str = "";
 		try {
 			int index = 0;
 			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
 			for (String item : myItems) {
-				if (!item.equals(mediator.getTitles()[index])) {
-					nameValuePairs.add(new BasicNameValuePair(mediator.getKeys()[index],
+				if (!item.equals(allColumns[index])) {
+					nameValuePairs.add(new BasicNameValuePair(keys[index],
 							item));
 				}
 				index++;

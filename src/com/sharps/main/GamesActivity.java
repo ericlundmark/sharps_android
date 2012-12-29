@@ -1,12 +1,11 @@
 package com.sharps.main;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Hashtable;
-
+import Database.MySQLiteHelper;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Color;
 import android.os.Bundle;
-import android.support.v4.app.NavUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -14,114 +13,129 @@ import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.SimpleAdapter;
 
 import com.cellr.noid.actionbar.ActionBarListActivity;
 import com.sharps.R;
-import com.sharps.Network.NetworkMediator;
+import com.sharps.Network.GamesDownloader;
 
 public class GamesActivity extends ActionBarListActivity implements
-		NetworkContentContainer, OnScrollListener {
-	private ArrayList<HashMap<String, String>> content = new ArrayList<HashMap<String, String>>();
-	private NetworkMediator mediator = NetworkMediator.getSingletonObject();
-	private String id;
-	boolean downloading = false;
+		OnScrollListener, OnItemClickListener {
+	private String sheetID;
+	private Cursor cursor;
+	private SQLiteDatabase database;
+	private MySQLiteHelper dbHelper;
+	private String[] allColumns = { MySQLiteHelper.COLUMN_TEAM1,
+			MySQLiteHelper.COLUMN_TEAM2, MySQLiteHelper.COLUMN_DATE,
+			MySQLiteHelper.COLUMN_TIME, MySQLiteHelper.COLUMN_SIGN,
+			MySQLiteHelper.COLUMN_RESULT, MySQLiteHelper.COLUMN_ODDS,
+			MySQLiteHelper.COLUMN_AMOUNT, MySQLiteHelper.COLUMN_GAMEID,
+			MySQLiteHelper.COLUMN_SHEETID, MySQLiteHelper.COLUMN_RESULT,
+			MySQLiteHelper.COLUMN_ID };
+	private String selection;
+	private String orderBy = MySQLiteHelper.COLUMN_DATE + " DESC ";
+	private boolean downloading = false;
+	public static boolean isLastPageReched = false;
+	private int page = 0;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.games_view);
-
-		getListView().setOnScrollListener(this);
-		mediator.setContentContainer(this);
 		Intent i = getIntent();
-		id = i.getStringExtra("id");
-
-		if (mediator.getLibrary().getGames().get(id) != null) {
-
-			for (Hashtable<String, String> hashtable : mediator.getLibrary()
-					.getGames().get(id)) {
-				HashMap<String, String> hashMap = new HashMap<String, String>();
-				hashMap.put("line1",
-						hashtable.get("team1") + "-" + hashtable.get("team2"));
-				hashMap.put("line2", "Insats: " + hashtable.get("amount")
-						+ " Odds: " + hashtable.get("odds") + " Netto: "
-						+ hashtable.get("result"));
-				hashMap.put("id", id);
-				content.add(hashMap);
-			}
-
-		}
-		String[] from = { "line1", "line2" };
-		int[] to = { android.R.id.text1, android.R.id.text2 };
-
-		setListAdapter(new GameAdapter(this, content,
-				android.R.layout.simple_list_item_2, from, to, id));
-		getListView().setOnItemClickListener(new OnItemClickListener() {
-
-			@Override
-			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
-					long arg3) {
-				Intent myIntent = new Intent(GamesActivity.this,
-						ShowGameDetailsActivity.class);
-				myIntent.putExtra("id", id);
-				myIntent.putExtra("index", arg2);
-				GamesActivity.this.startActivity(myIntent);
-			}
-
-		});
+		sheetID = i.getStringExtra("sheetID");
+		selection = MySQLiteHelper.COLUMN_SHEETID + " = " + sheetID;
+		getListView().setOnScrollListener(this);
+		getListView().setOnItemClickListener(this);
 	}
 
 	@Override
-	public void updateViewContent(ViewContent mode) {
-		if (mode == ViewContent.GAMES) {
-			System.out.println(mediator.getLibrary().getGames().get(id));
-			if (mediator.getLibrary().getGames().get(id) != null) {
-				content.clear();
-				for (Hashtable<String, String> hashtable : mediator
-						.getLibrary().getGames().get(id)) {
-					HashMap<String, String> hashMap = new HashMap<String, String>();
-					hashMap.put("line1", hashtable.get("team1") + "-"
-							+ hashtable.get("team2"));
-					hashMap.put("line2", "Insats: " + hashtable.get("amount")
-							+ " Odds: " + hashtable.get("odds") + " Netto: "
-							+ hashtable.get("result"));
-					hashMap.put("id", id);
-					content.add(hashMap);
-				}
+	protected void onResume() {
+		super.onResume();
+		dbHelper = new MySQLiteHelper(getApplicationContext());
+		database = dbHelper.getWritableDatabase();
+		int[] to = { android.R.id.text1, android.R.id.text2 };
+		cursor = database.query(MySQLiteHelper.TABLE_GAMES, allColumns,
+				selection, null, null, null, orderBy);
+		page = (cursor.getCount() + 1) / 10;
+		ShowGamesAdapter adapter = new ShowGamesAdapter(
+				getApplicationContext(),
+				R.layout.simple_list_item_2_black_text, cursor, allColumns, to,
+				0) {
 
+			@Override
+			public int getColor(Cursor c) {
+				String str = c.getString(c
+						.getColumnIndex(MySQLiteHelper.COLUMN_RESULT));
+				double d = Double.parseDouble(str);
+				if (d > 0) {
+					return Color.GREEN;
+				} else if (d < 0) {
+					return Color.RED;
+				} else {
+					return Color.GRAY;
+				}
 			}
-			String[] from = { "line1", "line2" };
-			int[] to = { android.R.id.text1, android.R.id.text2 };
-			if (getListAdapter() == null) {
-				setListAdapter(new GameAdapter(this, content,
-						android.R.layout.simple_list_item_2, from, to, id));
-			} else {
-				System.out.println("notify " + content.size());
-				((SimpleAdapter) getListAdapter()).notifyDataSetChanged();
-				downloading = false;
-				getActionBarHelper().setRefreshActionItemState(false);
-			}
-		}
+
+		};
+		setListAdapter(adapter);
+		database.close();
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		isLastPageReched=false;
+		cursor.close();
 	}
 
 	@Override
 	public void onScroll(AbsListView view, int firstVisibleItem,
 			int visibleItemCount, int totalItemCount) {
 		boolean loadMore = false;
-		if (mediator.getLibrary().getMySheets().get(id) != null) {
-			loadMore = /* maybe add a padding */
-			firstVisibleItem + visibleItemCount >= totalItemCount
-					&& totalItemCount < Integer.parseInt(mediator.getLibrary()
-							.getMySheets().get(id).get("numberOfGames"));
-		}
-
+		loadMore = /* maybe add a padding */
+		firstVisibleItem + visibleItemCount >= totalItemCount
+				&& !isLastPageReched;
 		if (loadMore && !downloading) {
+			downloadGames(page);
+			page++;
 			downloading = true;
-			System.out.println("load more " + (content.size() + 1) / 10);
-			mediator.downloadNextGames(id);
-			getActionBarHelper().setRefreshActionItemState(true);
 		}
+	}
+
+	private synchronized void downloadGames(final int page) {
+		System.out.println("Downloading games");
+		setProgressBarIndeterminateVisibility(true);
+		downloading = true;
+		new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				new GamesDownloader(getApplicationContext(),
+						"http://www.sharps.se/forums/includes/ss/app_games.php?ssid="
+								+ sheetID + "&page=" + page);
+				runOnUiThread(new Runnable() {
+
+					@Override
+					public void run() {
+
+						if (getListAdapter() != null) {
+							dbHelper = new MySQLiteHelper(
+									getApplicationContext());
+							database = dbHelper.getWritableDatabase();
+							cursor = database.query(MySQLiteHelper.TABLE_GAMES,
+									allColumns, selection, null, null, null,
+									orderBy);
+							((ShowGamesAdapter) getListAdapter())
+									.changeCursor(cursor);
+							setProgressBarIndeterminateVisibility(false);
+							database.close();
+							downloading = false;
+						}
+
+					}
+				});
+			}
+		}).start();
 	}
 
 	@Override
@@ -132,20 +146,35 @@ public class GamesActivity extends ActionBarListActivity implements
 			finish();
 			break;
 		case R.id.addGame:
-			Intent myIntent = new Intent(GamesActivity.this, AddGameActivity.class);
-			myIntent.putExtra("id", id);
+			Intent myIntent = new Intent(GamesActivity.this,
+					AddGameActivity.class);
+			myIntent.putExtra("sheetID", sheetID);
 			startActivity(myIntent);
 			break;
+		case R.id.menu_refresh:
+			downloadGames(0);
 		}
 		return super.onOptionsItemSelected(item);
 	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-
+		dbHelper = new MySQLiteHelper(getApplicationContext());
+		database = dbHelper.getWritableDatabase();
+		Cursor c = database.query(MySQLiteHelper.TABLE_SPREADSHEETS,
+				new String[] { MySQLiteHelper.COLUMN_OWNER,
+						MySQLiteHelper.COLUMN_SHEETID },
+				MySQLiteHelper.COLUMN_SHEETID + " = " + sheetID, null, null,
+				null, null);
+		c.moveToFirst();
+		String str = c.getString(c.getColumnIndex(MySQLiteHelper.COLUMN_OWNER));
+		c.close();
+		database.close();
 		// Inflate the menu; this adds items to the action bar if it is
 		// present.
-		getMenuInflater().inflate(R.menu.activity_add_game	, menu);
+		if (str.equals("1")) {
+			getMenuInflater().inflate(R.menu.activity_games, menu);
+		}
 
 		return super.onCreateOptionsMenu(menu);
 	}
@@ -153,5 +182,17 @@ public class GamesActivity extends ActionBarListActivity implements
 	@Override
 	public void onScrollStateChanged(AbsListView arg0, int arg1) {
 
+	}
+
+	@Override
+	public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
+		Intent myIntent = new Intent(GamesActivity.this,
+				ShowGameDetailsActivity.class);
+		Cursor cursor = (Cursor) getListAdapter().getItem(arg2);
+		String gameID = cursor.getString(cursor
+				.getColumnIndex(MySQLiteHelper.COLUMN_GAMEID));
+		myIntent.putExtra("gameID", gameID);
+		myIntent.putExtra("sheetID", sheetID);
+		startActivity(myIntent);
 	}
 }

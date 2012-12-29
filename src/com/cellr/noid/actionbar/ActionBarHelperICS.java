@@ -18,8 +18,6 @@ package com.cellr.noid.actionbar;
 
 import android.app.Activity;
 import android.content.Context;
-import android.view.Menu;
-import android.view.MenuItem;
 
 /**
  * An extension of {@link com.cellr.noid.actionbar.example.android.actionbarcompat.ActionBarHelper} that provides Android

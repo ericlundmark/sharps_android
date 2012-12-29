@@ -1,7 +1,6 @@
 package com.sharps.Network;
 
 import java.io.IOException;
-import java.util.Hashtable;
 
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
@@ -14,29 +13,25 @@ import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 
 public class CorrectionHandler extends Thread {
-	Hashtable<String, String> game;
 	NetworkMediator mediator;
-	String id;
+	String sheetID;
+	String gameID;
 	String result;
 
-	public CorrectionHandler(String id, String result,
-			Hashtable<String, String> game) {
+	public CorrectionHandler(String sheetID, String gameID, String result) {
 		super();
-		// TODO Auto-generated constructor stub
-		this.game = game;
 		mediator = NetworkMediator.getSingletonObject();
-		this.id = id;
+		this.sheetID = sheetID;
+		this.gameID = gameID;
 		this.result = result;
 	}
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
-		System.out.println(id + " " + game.get("spelid") + " " + result);
 		HttpClient hc = new DefaultHttpClient();
 		HttpPost post = new HttpPost(
 				"http://www.sharps.se/forums/includes/ss/ajax_edit_spreadsheet.php?id="
-						+ id + "&grade=" + game.get("spelid") + "&to=" + result);
+						+ sheetID + "&grade=" + gameID + "&to=" + result);
 		// Create local HTTP context
 		HttpContext localContext = new BasicHttpContext();
 		// Bind custom cookie store to the local context
@@ -46,10 +41,8 @@ public class CorrectionHandler extends Thread {
 		try {
 			hc.execute(post, responseHandler, localContext);
 		} catch (ClientProtocolException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

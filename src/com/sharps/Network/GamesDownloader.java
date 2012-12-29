@@ -1,15 +1,7 @@
 package com.sharps.Network;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Hashtable;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
@@ -22,41 +14,39 @@ import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
 
-import android.os.AsyncTask;
+import com.sharps.main.GamesActivity;
 
-import com.sharps.main.ViewContent;
+import Database.MySQLiteHelper;
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 
-public class GamesDownloader
-		extends
-		AsyncTask<String, Integer, HashMap<String, ArrayList<Hashtable<String, String>>>> {
+public class GamesDownloader {
 	private NetworkMediator mediator = NetworkMediator.getSingletonObject();
+	private SQLiteDatabase database;
+	private MySQLiteHelper dbHelper;
+	private int amountAdded=0;
+	public GamesDownloader(Context context, String URL) {
 
-	public GamesDownloader(String URL) {
-		execute(URL);
-		// TODO Auto-generated constructor stub
-	}
-
-	@Override
-	protected HashMap<String, ArrayList<Hashtable<String, String>>> doInBackground(
-			String... params) {
-		// TODO Auto-generated method stub
+		dbHelper = new MySQLiteHelper(context);
+		database = dbHelper.getWritableDatabase();
 		String str = "";
 		try {
 			HttpParams httpParameters = new BasicHttpParams();
 			int timeoutConnection = 3000;
-			HttpConnectionParams.setConnectionTimeout(httpParameters, timeoutConnection);
-			// Set the default socket timeout (SO_TIMEOUT) 
+			HttpConnectionParams.setConnectionTimeout(httpParameters,
+					timeoutConnection);
+			// Set the default socket timeout (SO_TIMEOUT)
 			// in milliseconds which is the timeout for waiting for data.
 			int timeoutSocket = 3000;
 			HttpConnectionParams.setSoTimeout(httpParameters, timeoutSocket);
 			HttpClient hc = new DefaultHttpClient(httpParameters);
-			HttpGet post = new HttpGet(params[0]);
+			HttpGet post = new HttpGet(URL);
 			// Create local HTTP context
 			HttpContext localContext = new BasicHttpContext();
 			// Bind custom cookie store to the local context
@@ -64,81 +54,138 @@ public class GamesDownloader
 					mediator.getCockies());
 			ResponseHandler<String> responseHandler = new BasicResponseHandler();
 			str = hc.execute(post, responseHandler, localContext);
-			System.out.println("Inkommande: " + str);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return parseContent(str);
+		parseContent(str);
 	}
 
-	@Override
-	protected void onPostExecute(
-			HashMap<String, ArrayList<Hashtable<String, String>>> result) {
-		// TODO Auto-generated method stub
-		super.onPostExecute(result);
-		mediator.notifyContentContainers(ViewContent.GAMES);
-	}
-
-	private HashMap<String, ArrayList<Hashtable<String, String>>> parseContent(
-			String str) {
-		HashMap<String, ArrayList<Hashtable<String, String>>> map = mediator
-				.getLibrary().getGames();
-		// TODO Auto-generated method stub
+	private void parseContent(String str) {
 		try {
-			DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory
-					.newInstance();
-			DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
-			InputSource is = new InputSource(new StringReader(str));
-			org.w3c.dom.Document doc = docBuilder.parse(is);
-			// normalize text representation
-			doc.getDocumentElement().normalize();
-			//System.out.println("Root element of the doc is "
-			//		+ doc.getDocumentElement().getNodeName());
-			NodeList listOfGames = doc.getElementsByTagName("game");
-			int totalGames = listOfGames.getLength();
-			//System.out.println("Total no of games : " + totalGames);
+			XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+			factory.setNamespaceAware(true);
+			XmlPullParser parser = factory.newPullParser();
+			parser.setInput(new StringReader(str));
+			int eventType = parser.getEventType();
+			ContentValues values = new ContentValues();
+			while (eventType != XmlPullParser.END_DOCUMENT) {
+				switch (eventType) {
 
-			for (int s = 0; s < listOfGames.getLength(); s++) {
-				Hashtable<String, String> table = new Hashtable<String, String>();
-				String id = null;
-				Node eventNode = listOfGames.item(s);
-				if (eventNode.getNodeType() == Node.ELEMENT_NODE) {
-					Element eventElement = (Element) eventNode;
-					for (int i = 0; i < eventElement.getChildNodes()
-							.getLength(); i++) {
-						Node e = eventElement.getChildNodes().item(i)
-								.getChildNodes().item(0);
-						if (e != null && e.getNodeValue() != null) {
-							if (eventNode.getChildNodes().item(i).getNodeName()
-									.equals("sheetid")) {
-								id = e.getNodeValue();
-								if (map.get(id)==null) {
-									map.put(id,
-											new ArrayList<Hashtable<String, String>>());
-								}
-							}
-							table.put(eventNode.getChildNodes().item(i)
-									.getNodeName(), e.getNodeValue());
-						}
+				// at start of a tag: START_TAG
+				case XmlPullParser.START_TAG:
+					// get tag name
+					String tagName = parser.getName();
+					// if <study>, get attribute: 'id'
+					if (tagName.equalsIgnoreCase("date")) {
+						values.put(MySQLiteHelper.COLUMN_DATE, readText(parser));
+					} else if (tagName.equalsIgnoreCase("time")) {
+						values.put(MySQLiteHelper.COLUMN_TIME, readText(parser));
+					} else if (tagName.equalsIgnoreCase("team1")) {
+						values.put(MySQLiteHelper.COLUMN_TEAM1,
+								readText(parser));
+					} else if (tagName.equalsIgnoreCase("team2")) {
+						values.put(MySQLiteHelper.COLUMN_TEAM2,
+								readText(parser));
+					} else if (tagName.equalsIgnoreCase("sign")) {
+						values.put(MySQLiteHelper.COLUMN_SIGN, readText(parser));
+					} else if (tagName.equalsIgnoreCase("sign2")) {
+						values.put(MySQLiteHelper.COLUMN_SIGN2,
+								readText(parser));
+					} else if (tagName.equalsIgnoreCase("amount")) {
+						values.put(MySQLiteHelper.COLUMN_AMOUNT,
+								readText(parser));
+					} else if (tagName.equalsIgnoreCase("odds")) {
+						values.put(MySQLiteHelper.COLUMN_ODDS, readText(parser));
+					} else if (tagName.equalsIgnoreCase("sport")) {
+						values.put(MySQLiteHelper.COLUMN_SPORT,
+								readText(parser));
+					} else if (tagName.equalsIgnoreCase("country")) {
+						values.put(MySQLiteHelper.COLUMN_COUNTRY,
+								readText(parser));
+					} else if (tagName.equalsIgnoreCase("league")) {
+						values.put(MySQLiteHelper.COLUMN_LEAGUE,
+								readText(parser));
+					} else if (tagName.equalsIgnoreCase("info")) {
+						values.put(MySQLiteHelper.COLUMN_INFO, readText(parser));
+					} else if (tagName.equalsIgnoreCase("rekare")) {
+						values.put(MySQLiteHelper.COLUMN_REKARE,
+								readText(parser));
+					} else if (tagName.equalsIgnoreCase("bolag")) {
+						values.put(MySQLiteHelper.COLUMN_COMPANY,
+								readText(parser));
+					} else if (tagName.equalsIgnoreCase("live")) {
+						values.put(MySQLiteHelper.COLUMN_LIVE, readText(parser));
+					} else if (tagName.equalsIgnoreCase("locked")) {
+						values.put(MySQLiteHelper.COLUMN_LOCKED,
+								readText(parser));
+					} else if (tagName.equalsIgnoreCase("period")) {
+						values.put(MySQLiteHelper.COLUMN_PERIOD,
+								readText(parser));
+					} else if (tagName.equalsIgnoreCase("alive")) {
+						values.put(MySQLiteHelper.COLUMN_ALIVE,
+								readText(parser));
+					} else if (tagName.equalsIgnoreCase("result")) {
+						values.put(MySQLiteHelper.COLUMN_RESULT,
+								readText(parser));
+					} else if (tagName.equalsIgnoreCase("spelid")) {
+						values.put(MySQLiteHelper.COLUMN_GAMEID,
+								readText(parser));
+					} else if (tagName.equalsIgnoreCase("sheetid")) {
+						values.put(MySQLiteHelper.COLUMN_SHEETID,
+								readText(parser));
 					}
-					map.get(id).add(table);
-				}// end of if clause
-				
-			}// end of for loop with s var
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SAXException e) {
-			// TODO Auto-generated catch block
+					// if <content>
+					else if (tagName.equalsIgnoreCase("game")) {
+						values.clear();
+					}
+					break;
+				case XmlPullParser.END_TAG:
+					tagName = parser.getName();
+					if (tagName.equalsIgnoreCase("game")) {
+						String selection = MySQLiteHelper.COLUMN_GAMEID
+								+ " = "
+								+ values.getAsString(MySQLiteHelper.COLUMN_GAMEID);
+						Cursor cursor = database.query(
+								MySQLiteHelper.TABLE_GAMES,
+								new String[] { MySQLiteHelper.COLUMN_GAMEID },
+								selection, null, null, null, null);
+						if (cursor.getCount() > 0) {
+							amountAdded++;
+							database.update(MySQLiteHelper.TABLE_GAMES, values,
+									selection, null);
+						} else if(values.size()>0){
+							amountAdded++;
+							database.insert(MySQLiteHelper.TABLE_GAMES, null,
+									values);
+						}
+
+					}
+					break;
+				}
+				// jump to next event
+				eventType = parser.next();
+			}
+			// exception stuffs
+		} catch (XmlPullParserException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (ParserConfigurationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} finally {
+			if (amountAdded==0) {
+				GamesActivity.isLastPageReched=true;
+			}
+			database.close();
 		}
-		return map;
+	}
+
+	private String readText(XmlPullParser parser) throws IOException,
+			XmlPullParserException {
+		String result = "";
+		if (parser.next() == XmlPullParser.TEXT) {
+			result = parser.getText();
+			parser.nextTag();
+		}
+		return result;
 	}
 
 }

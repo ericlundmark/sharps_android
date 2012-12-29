@@ -2,47 +2,97 @@ package com.sharps.main;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Hashtable;
 
+import Database.MySQLiteHelper;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Color;
 import android.os.Bundle;
-import android.support.v4.app.NavUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.SimpleAdapter;
 
 import com.cellr.noid.actionbar.ActionBarListActivity;
 import com.sharps.R;
-import com.sharps.Network.NetworkMediator;
+import com.sharps.Network.CorrectionHandler;
 
 public class ShowGameDetailsActivity extends ActionBarListActivity {
-	NetworkMediator mediator = NetworkMediator.getSingletonObject();
-	ArrayList<HashMap<String, String>> content = new ArrayList<HashMap<String, String>>();
-	String id;
-	int index;
-	Hashtable<String, String> game;
+	public static enum Results {
+		WIN, PUSH, LOSS
+	}
+
+	private SQLiteDatabase database;
+	private MySQLiteHelper dbHelper;
+	private String[] allColumns = { MySQLiteHelper.COLUMN_TEAM1,
+			MySQLiteHelper.COLUMN_TEAM2, MySQLiteHelper.COLUMN_DATE,
+			MySQLiteHelper.COLUMN_TIME, MySQLiteHelper.COLUMN_SIGN,
+			MySQLiteHelper.COLUMN_SIGN2, MySQLiteHelper.COLUMN_SPORT,
+			MySQLiteHelper.COLUMN_COUNTRY, MySQLiteHelper.COLUMN_LEAGUE,
+			MySQLiteHelper.COLUMN_COMPANY, MySQLiteHelper.COLUMN_PERIOD,
+			MySQLiteHelper.COLUMN_INFO, MySQLiteHelper.COLUMN_REKARE,
+			MySQLiteHelper.COLUMN_AMOUNT, MySQLiteHelper.COLUMN_ODDS,
+			MySQLiteHelper.COLUMN_RESULT };
+	private String selection;
+	private String gameID;
+	private String sheetID;
+	private String[] from = { "line1", "line2" };
+	private int[] to = { android.R.id.text1, android.R.id.text2 };
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.show_game);
 		Intent intent = getIntent();
-		id = intent.getStringExtra("id");
-		index = intent.getIntExtra("index", -1);
-		game = mediator.getLibrary().getGames().get(id).get(index);
-		reloadContent();
-		String[] from = { "line1", "line2" };
-		int[] to = { android.R.id.text1, android.R.id.text2 };
-		setListAdapter(new ShowGameAdapter(this, content,
-				android.R.layout.simple_list_item_2, from, to, game));
+		gameID = intent.getStringExtra("gameID");
+		sheetID = intent.getStringExtra("sheetID");
+		selection = MySQLiteHelper.COLUMN_GAMEID + " = " + gameID;
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		if (database == null) {
+			dbHelper = new MySQLiteHelper(getApplicationContext());
+			database = dbHelper.getWritableDatabase();
+		}
+		SimpleAdapter adapter = new SimpleAdapter(getApplicationContext(),
+				getData(), R.layout.simple_list_item_2_black_text, from, to);
+		setListAdapter(adapter);
+	}
+
+	private ArrayList<HashMap<String, String>> getData() {
+		dbHelper = new MySQLiteHelper(getApplicationContext());
+		database = dbHelper.getWritableDatabase();
+		ArrayList<HashMap<String, String>> list = new ArrayList<HashMap<String, String>>();
+		Cursor cursor = database.query(MySQLiteHelper.TABLE_GAMES, allColumns,
+				selection, null, null, null, null);
+		cursor.moveToFirst();
+		for (int i = 0; i < allColumns.length; i++) {
+			String str = cursor.getString(cursor.getColumnIndex(allColumns[i]));
+			if (!str.equals("")) {
+				HashMap<String, String> map = new HashMap<String, String>();
+				map.put(from[0],
+						cursor.getString(cursor.getColumnIndex(allColumns[i])));
+				map.put(from[1], allColumns[i]);
+				list.add(map);
+			}
+		}
+		cursor.close();
+		database.close();
+		return list;
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		database.close();
 	}
 
 	@Override
@@ -52,111 +102,100 @@ public class ShowGameDetailsActivity extends ActionBarListActivity {
 			finish();
 			break;
 		case R.id.win:
-			mediator.setResultToGame(id, "win", game);
-			game.put(
-					"result",
-					String.valueOf(Double.parseDouble(game.get("amount"))
-							* Double.parseDouble(game.get("odds"))
-							- Double.parseDouble(game.get("amount"))));
-			reloadContent();
-			getListView().invalidateViews();
+			new CorrectionHandler(sheetID, gameID, "win").start();
 			break;
 		case R.id.push:
-			mediator.setResultToGame(id, "push", game);
-			game.put("result", "0");
-			reloadContent();
-			getListView().invalidateViews();
+			new CorrectionHandler(sheetID, gameID, "push").start();
 			break;
 		case R.id.loss:
-			mediator.setResultToGame(id, "loss", game);
-			game.put(
-					"result",
-					"-"
-							+ String.valueOf(Double.parseDouble(game
-									.get("amount"))
-									* Double.parseDouble(game.get("odds"))
-									- Double.parseDouble(game.get("amount"))));
-			reloadContent();
-			getListView().invalidateViews();
+			new CorrectionHandler(sheetID, gameID, "loss").start();
 			break;
 		case R.id.addGame:
-			final ArrayList<String> mySheets = new ArrayList<String>();
-			final ArrayList<String> sheetid = new ArrayList<String>();
-			mySheets.clear();
-			sheetid.clear();
-			for (String string : mediator.getLibrary().getMySheets().keySet()) {
-				if (mediator.getLibrary().getMySheets().get(string)
-						.get("sheetGroup").equals("my")) {
-					mySheets.add(mediator.getLibrary().getMySheets()
-							.get(string).get("title"));
-					sheetid.add(mediator.getLibrary().getMySheets().get(string)
-							.get("id"));
-				}
-			}
-
-			AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-			builder.setTitle("Välj spreadsheet");
-			ListView modeList = new ListView(getContext());
-			ArrayAdapter<String> modeAdapter = new ArrayAdapter<String>(
-					getContext(), android.R.layout.simple_list_item_1,
-					android.R.id.text1, mySheets);
-			modeList.setAdapter(modeAdapter);
-			builder.setView(modeList);
-			final Dialog dialog = builder.create();
-			modeList.setOnItemClickListener(new OnItemClickListener() {
-
-				@Override
-				public void onItemClick(AdapterView<?> arg0, View arg1,
-						int arg2, long arg3) {
-					Intent myIntent = new Intent(ShowGameDetailsActivity.this,
-							AddGameActivity.class);
-					myIntent.putExtra("id", sheetid.get(arg2));
-					myIntent.putExtra("rek", game);
-					myIntent.putExtra("mode", "rek");
-					dialog.dismiss();
-					ShowGameDetailsActivity.this.startActivity(myIntent);
-				}
-
-			});
-
-			dialog.show();
+			createDialog();
 			break;
 		}
 		return super.onOptionsItemSelected(item);
 	}
 
+	private void createDialog() {
+		dbHelper = new MySQLiteHelper(getApplicationContext());
+		database = dbHelper.getWritableDatabase();
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle("Välj ett spreadsheet");
+
+		ListView modeList = new ListView(getApplicationContext());
+
+		String[] spreadsheetColumns = { MySQLiteHelper.COLUMN_TITLE,
+				MySQLiteHelper.COLUMN_ROI, MySQLiteHelper.COLUMN_SHEETID,
+				MySQLiteHelper.COLUMN_ID, MySQLiteHelper.COLUMN_OWNER };
+
+		Cursor cursor = database.query(MySQLiteHelper.TABLE_SPREADSHEETS,
+				spreadsheetColumns, MySQLiteHelper.COLUMN_OWNER + " = 1", null,
+				null, null, null);
+		final MyAdapter temp = new MyAdapter(getApplicationContext(),
+				android.R.layout.simple_list_item_2, cursor,
+				spreadsheetColumns, to, 0) {
+
+			@Override
+			public int getColor(Cursor c) {
+				String str = c.getString(c
+						.getColumnIndex(MySQLiteHelper.COLUMN_ROI));
+				double d = Double.parseDouble(str);
+				if (d >= 100) {
+					return Color.GREEN;
+				} else if (d < 100 && d != 0) {
+					return Color.RED;
+				} else {
+					return Color.GRAY;
+				}
+			}
+		};
+		modeList.setAdapter(temp);
+		builder.setView(modeList);
+		final Dialog dialog = builder.create();
+		dialog.show();
+		modeList.setOnItemClickListener(new OnItemClickListener() {
+
+			@Override
+			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
+					long arg3) {
+				Intent intent = new Intent(ShowGameDetailsActivity.this,
+						AddGameActivity.class);
+				Cursor c = (Cursor) temp.getItem(arg2);
+				String str = c.getString(c
+						.getColumnIndex(MySQLiteHelper.COLUMN_SHEETID));
+				intent.putExtra("sheetID", str);
+				intent.putExtra("gameID", gameID);
+				database.close();
+				dialog.dismiss();
+				startActivity(intent);
+			}
+
+		});
+	}
+
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		if (mediator.getLibrary().getMySheets().get(id).get("sheetGroup")
-				.equals("my")) {
+		dbHelper = new MySQLiteHelper(getApplicationContext());
+		database = dbHelper.getWritableDatabase();
+		Cursor c = database.query(MySQLiteHelper.TABLE_SPREADSHEETS,
+				new String[] { MySQLiteHelper.COLUMN_OWNER,
+						MySQLiteHelper.COLUMN_SHEETID },
+				MySQLiteHelper.COLUMN_SHEETID + " = " + sheetID, null, null,
+				null, null);
+		c.moveToFirst();
+		String str = c.getString(c.getColumnIndex(MySQLiteHelper.COLUMN_OWNER));
+		if (str.equals("1")) {
 			// Inflate the menu; this adds items to the action bar if it is
 			// present.
 			getMenuInflater().inflate(R.menu.activity_show_game_details, menu);
 		} else {
 			// Inflate the menu; this adds items to the action bar if it is
 			// present.
-			getMenuInflater().inflate(R.menu.activity_add_game, menu);
+			getMenuInflater().inflate(R.menu.activity_games, menu);
 		}
+		c.close();
+		database.close();
 		return super.onCreateOptionsMenu(menu);
-	}
-
-	private Context getContext() {
-		return this;
-	}
-
-	private void reloadContent() {
-		content.clear();
-		if (mediator.getLibrary().getGames().get(id) != null) {
-			Hashtable<String, String> hashtable = mediator.getLibrary()
-					.getGames().get(id).get(index);
-			for (int i = 0; i < mediator.getKeys().length; i++) {
-				HashMap<String, String> hashMap = new HashMap<String, String>();
-				if (hashtable.get(mediator.getKeys()[i]) != null) {
-					hashMap.put("line1", hashtable.get(mediator.getKeys()[i]));
-					hashMap.put("line2", mediator.getTitles()[i]);
-					content.add(hashMap);
-				}
-			}
-		}
 	}
 }

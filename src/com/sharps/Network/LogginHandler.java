@@ -33,12 +33,10 @@ public class LogginHandler extends AsyncTask<String, Integer, Void>{
 		this.username=username;
 		this.password=password;
 		execute();
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override
 	protected void onPostExecute(Void result) {
-		// TODO Auto-generated method stub
 		mediator.loginListener.loginFinished(mediator.isLoggedIn());
 		super.onPostExecute(result);
 	}
@@ -71,13 +69,10 @@ public class LogginHandler extends AsyncTask<String, Integer, Void>{
 			post.setEntity(new UrlEncodedFormEntity(nameValuePairs,"UTF-8"));
 			HttpResponse response = hc.execute(post, localContext);
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (ClientProtocolException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return null;

@@ -1,11 +1,14 @@
 package com.sharps.main;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Hashtable;
 
+import Database.MySQLiteHelper;
 import android.app.SearchManager;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
@@ -15,92 +18,56 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.SimpleAdapter;
 
 import com.cellr.noid.actionbar.ActionBarListActivity;
 import com.sharps.R;
-import com.sharps.Network.NetworkMediator;
+import com.sharps.Network.GameAdder;
+import com.sharps.Network.SearchGamesGetter;
 
 public class AddGameActivity extends ActionBarListActivity implements
 		OnItemClickListener {
-	public static final int GET_SEARCH_RESULTS = 0;
-	String id;
+	private String sheetID;
+	private String gameID;
 	private ListView myList;
-	private TextFieldSimpleAdapter myAdapter;
-	private NetworkMediator mediator = NetworkMediator.getSingletonObject();
-	private ArrayList<String> searchResult = new ArrayList<String>();
-	private ArrayList<HashMap<String, String>> listData = new ArrayList<HashMap<String, String>>();
+	private TextFieldSimpleAdapter adapter;
 	private String[] from = { "line1", "line2" };
 	private int[] to = { R.id.edit_text, android.R.id.text2 };
-
-	private void generateContent() {
-		listData.clear();
-		String[] titles = mediator.getTitles();
-		for (int i = 0; i < titles.length; i++) {
-			HashMap<String, String> temp = new HashMap<String, String>();
-			temp.put(from[0], titles[i]);
-			temp.put(from[1], titles[i]);
-			listData.add(temp);
-		}
-	}
-
-	private void generateContent(ArrayList<String> list) {
-		listData.clear();
-		String[] titles = mediator.getTitles();
-		for (int i = 0; i < list.size(); i++) {
-			HashMap<String, String> temp = new HashMap<String, String>();
-			temp.put(from[0], list.get(i));
-			temp.put(from[1], titles[i]);
-			listData.add(temp);
-		}
-	}
+	private SQLiteDatabase database;
+	private MySQLiteHelper dbHelper;
+	private String[] allColumns = { MySQLiteHelper.COLUMN_TEAM1,
+			MySQLiteHelper.COLUMN_TEAM2, MySQLiteHelper.COLUMN_DATE,
+			MySQLiteHelper.COLUMN_TIME, MySQLiteHelper.COLUMN_SIGN,
+			MySQLiteHelper.COLUMN_SIGN2, MySQLiteHelper.COLUMN_SPORT,
+			MySQLiteHelper.COLUMN_COUNTRY, MySQLiteHelper.COLUMN_LEAGUE,
+			MySQLiteHelper.COLUMN_COMPANY, MySQLiteHelper.COLUMN_PERIOD,
+			MySQLiteHelper.COLUMN_INFO, MySQLiteHelper.COLUMN_REKARE,
+			MySQLiteHelper.COLUMN_AMOUNT, MySQLiteHelper.COLUMN_ODDS,
+			MySQLiteHelper.COLUMN_RESULT };
+	private String selection;
+	private Button button;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_add_game);
-		Intent i = getIntent();
-		id = i.getStringExtra("id");
-		String mode = i.getStringExtra("mode");
-		Button button = (Button) findViewById(R.id.button1);
-		button.setOnClickListener(layGameButtonPushed);
 		myList = (ListView) findViewById(android.R.id.list);
 		myList.setItemsCanFocus(true);
-		generateContent();
-		if (savedInstanceState != null
-				&& savedInstanceState.containsKey("game") && mode == null) {
-			searchResult.addAll(savedInstanceState.getStringArrayList("game"));
-			generateContent(searchResult);
-		} else if (mode == null) {
-			searchResult.addAll(Arrays.asList(mediator.getTitles()));
-			generateContent(searchResult);
+		Intent intent = getIntent();
+		gameID = intent.getStringExtra("gameID");
+		sheetID = intent.getStringExtra("sheetID");
+		selection = MySQLiteHelper.COLUMN_GAMEID + " = " + gameID;
+		button = (Button) findViewById(R.id.button1);
+		button.setOnClickListener(layGameButtonPushed);
+		if (gameID != null) {
+			adapter = new TextFieldSimpleAdapter(getApplicationContext(),
+					getData(), R.layout.textfield_item, from, to);
+			setListAdapter(adapter);
 		} else {
-			HashMap<String, String> game = (HashMap<String, String>) i
-					.getSerializableExtra("rek");
-			ArrayList<String> list = new ArrayList<String>();
-			for (int j = 0; j < mediator.getKeys().length; j++) {
-				String temp = game.get(mediator.getKeys()[j]);
-				if (temp != null) {
-					list.add(temp);
-				} else {
-					list.add(mediator.getTitles()[j]);
-				}
-			}
-			searchResult.addAll(list);
-			generateContent(searchResult);
+			adapter = new TextFieldSimpleAdapter(getApplicationContext(),
+					getEmptyData(), R.layout.textfield_item, from, to);
+			setListAdapter(adapter);
 		}
-		myAdapter = new TextFieldSimpleAdapter(this, listData,
-				R.layout.textfield_item, from, to);
-		myList.setAdapter(myAdapter);
-		myList.setOnItemClickListener(this);
-		handleIntent(getIntent());
-	}
-
-	@Override
-	protected void onSaveInstanceState(Bundle outState) {
-		// TODO Auto-generated method stub
-		outState.putStringArrayList("game", searchResult);
-		super.onSaveInstanceState(outState);
 	}
 
 	@Override
@@ -109,45 +76,156 @@ public class AddGameActivity extends ActionBarListActivity implements
 		handleIntent(intent);
 	}
 
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		// TODO Auto-generated method stub
-		if (resultCode == RESULT_OK) {
-			searchResult = data.getStringArrayListExtra("result");
-			generateContent(searchResult);
-			myAdapter = new TextFieldSimpleAdapter(this, listData,
-					R.layout.textfield_item, from, to);
-			myList.setAdapter(myAdapter);
+	private void handleIntent(Intent intent) {
+		if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+			String query = intent.getStringExtra(SearchManager.QUERY);
+			doSearch(query);
 		}
 	}
 
-	private void handleIntent(Intent intent) {
-		// Get the intent, verify the action and get the query
-		if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
-			String query = intent.getStringExtra(SearchManager.QUERY);
-			// manually launch the real search activity
-			final Intent searchIntent = new Intent(getApplicationContext(),
-					SearchResultsActivity.class);
-			// add query to the Intent Extras
-			searchIntent.putExtra(SearchManager.QUERY, query);
-			startActivityForResult(searchIntent, GET_SEARCH_RESULTS);
-			intent.setAction(null);
+	private ArrayList<HashMap<String, String>> getData() {
+		dbHelper = new MySQLiteHelper(getApplicationContext());
+		database = dbHelper.getWritableDatabase();
+		ArrayList<HashMap<String, String>> list = new ArrayList<HashMap<String, String>>();
+		Cursor cursor = database.query(MySQLiteHelper.TABLE_GAMES, allColumns,
+				selection, null, null, null, null);
+		cursor.moveToFirst();
+		for (int i = 0; i < allColumns.length; i++) {
+			String str = cursor.getString(cursor.getColumnIndex(allColumns[i]));
+			if (!str.equals("")) {
+				HashMap<String, String> map = new HashMap<String, String>();
+				map.put(from[0],
+						cursor.getString(cursor.getColumnIndex(allColumns[i])));
+				map.put(from[1], allColumns[i]);
+				list.add(map);
+			}
 		}
+		cursor.close();
+		database.close();
+		return list;
+	}
+
+	private void doSearch(String query) {
+		SearchGamesGetter searchGamesGetter = new SearchGamesGetter(
+				"http://www.sharps.se/forums/includes/ss/app_infoga.php?letters="
+						+ query) {
+			@Override
+			protected void onPostExecute(
+					final ArrayList<Hashtable<String, String>> result) {
+				super.onPostExecute(result);
+				final ListView listView = (ListView) findViewById(R.id.searchResultsList);
+				ArrayList<HashMap<String, String>> content = new ArrayList<HashMap<String, String>>();
+				for (Hashtable<String, String> hashtable : result) {
+					HashMap<String, String> hashMap = new HashMap<String, String>();
+					hashMap.put("line1", hashtable.get("team1") + "-"
+							+ hashtable.get("team2"));
+					hashMap.put("line2", "Datum: " + hashtable.get("date")
+							+ " Tid: " + hashtable.get("time"));
+					content.add(hashMap);
+				}
+				SimpleAdapter adapter = new SimpleAdapter(
+						getApplicationContext(), content,
+						R.layout.simple_list_item_2_black_text, new String[] {
+								"line1", "line2" }, new int[] {
+								android.R.id.text1, android.R.id.text2 });
+				listView.setAdapter(adapter);
+				listView.setOnItemClickListener(new OnItemClickListener() {
+
+					@Override
+					public void onItemClick(AdapterView<?> arg0, View arg1,
+							int arg2, long arg3) {
+						ArrayList<String> arrayList = new ArrayList<String>();
+						arrayList.add(result.get(arg2).get("team1"));
+						arrayList.add(result.get(arg2).get("team2"));
+						arrayList.add(result.get(arg2).get("date"));
+						arrayList.add(result.get(arg2).get("time"));
+						arrayList.add("Tecken");
+						arrayList.add("Tecken2");
+						arrayList.add(result.get(arg2).get("sport"));
+						arrayList.add(result.get(arg2).get("country"));
+						arrayList.add(result.get(arg2).get("league"));
+						arrayList.add("Bolag");
+						arrayList.add("Period");
+						arrayList.add("Info");
+						arrayList.add("Rekare");
+						arrayList.add("Insats");
+						arrayList.add("Odds");
+						arrayList.add("Netto");
+						runOnUiThread(new Runnable() {
+							@Override
+							public void run() {
+								listView.setVisibility(View.GONE);
+								myList.setVisibility(View.VISIBLE);
+								button.setVisibility(View.VISIBLE);
+							}
+						});
+						TextFieldSimpleAdapter adapter = new TextFieldSimpleAdapter(
+								getApplicationContext(),
+								getDataFromList(arrayList),
+								R.layout.textfield_item, from, to);
+						setListAdapter(adapter);
+
+					}
+
+				});
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						listView.setVisibility(View.VISIBLE);
+						myList.setVisibility(View.GONE);
+						button.setVisibility(View.GONE);
+					}
+				});
+			}
+		};
+	}
+
+	private ArrayList<HashMap<String, String>> getDataFromList(
+			ArrayList<String> arrayList) {
+		ArrayList<HashMap<String, String>> list = new ArrayList<HashMap<String, String>>();
+		for (int i = 0; i < arrayList.size(); i++) {
+			HashMap<String, String> map = new HashMap<String, String>();
+			map.put(from[0], arrayList.get(i));
+			map.put(from[1], allColumns[i]);
+			list.add(map);
+		}
+		return list;
+	}
+
+	private ArrayList<HashMap<String, String>> getEmptyData() {
+		ArrayList<HashMap<String, String>> list = new ArrayList<HashMap<String, String>>();
+		for (int i = 0; i < allColumns.length; i++) {
+			HashMap<String, String> map = new HashMap<String, String>();
+			map.put(from[0], allColumns[i]);
+			map.put(from[1], allColumns[i]);
+			list.add(map);
+		}
+		return list;
 	}
 
 	private OnClickListener layGameButtonPushed = new OnClickListener() {
 
+		@Override
 		public void onClick(View v) {
-			mediator.layGame(myAdapter.getItemStrings(), id);
+			layGame(adapter.getItemStrings(), sheetID);
 			finish();
 		}
 
 	};
 
+	private void layGame(ArrayList<String> itemStrings, String sheetID) {
+		new Thread(new GameAdder(itemStrings, sheetID)).start();
+
+	}
+
+	@Override
 	public boolean onOptionsItemSelected(android.view.MenuItem item) {
 		switch (item.getItemId()) {
 		case android.R.id.home:
 			finish();
+			break;
+		case R.id.menu_search:
+			onSearchRequested();
 			break;
 		}
 		return super.onOptionsItemSelected(item);
@@ -155,6 +233,7 @@ public class AddGameActivity extends ActionBarListActivity implements
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
+		getMenuInflater().inflate(R.menu.activity_add_game, menu);
 		return super.onCreateOptionsMenu(menu);
 	}
 

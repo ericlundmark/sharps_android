@@ -4,7 +4,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Hashtable;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -32,11 +31,9 @@ import android.os.AsyncTask;
 
 public class SearchGamesGetter extends AsyncTask<String, Integer,ArrayList<Hashtable<String, String>> > {
 	private NetworkMediator mediator = NetworkMediator.getSingletonObject();
-	
 	public SearchGamesGetter(String URL) {
 		super();
 		execute(URL);
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override
@@ -66,18 +63,10 @@ public class SearchGamesGetter extends AsyncTask<String, Integer,ArrayList<Hasht
 		}
 		return parseContent(str);
 	}
-	
-	@Override
-	protected void onPostExecute(ArrayList<Hashtable<String, String>> result) {
-		// TODO Auto-generated method stub
-		super.onPostExecute(result);
-		mediator.getSearchable().searchFinished(result);
-	}
 
 	private ArrayList<Hashtable<String, String>> parseContent(
 			String str) {
 		ArrayList<Hashtable<String, String>> map = new ArrayList<Hashtable<String,String>>();
-		// TODO Auto-generated method stub
 		try {
 			DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory
 					.newInstance();
@@ -94,7 +83,6 @@ public class SearchGamesGetter extends AsyncTask<String, Integer,ArrayList<Hasht
 
 			for (int s = 0; s < listOfGames.getLength(); s++) {
 				Hashtable<String, String> table = new Hashtable<String, String>();
-				String id = null;
 				Node eventNode = listOfGames.item(s);
 				if (eventNode.getNodeType() == Node.ELEMENT_NODE) {
 					Element eventElement = (Element) eventNode;
@@ -112,16 +100,12 @@ public class SearchGamesGetter extends AsyncTask<String, Integer,ArrayList<Hasht
 				
 			}// end of for loop with s var
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (SAXException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (ParserConfigurationException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return map;

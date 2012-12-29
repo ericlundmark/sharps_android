@@ -76,18 +76,22 @@ public class TextFieldSimpleAdapter extends SimpleAdapter implements
 		return convertView;
 	}
 
+	@Override
 	public void onFocusChange(final View v, boolean hasFocus) {
 		((EditText) v).addTextChangedListener(new TextWatcher() {
 
+			@Override
 			public void onTextChanged(CharSequence s, int start, int before,
 					int count) {
 				itemStrings.put(v.getId(), s.toString());
 			}
 
+			@Override
 			public void beforeTextChanged(CharSequence s, int start, int count,
 					int after) {
 			}
 
+			@Override
 			public void afterTextChanged(Editable s) {
 			}
 		});
