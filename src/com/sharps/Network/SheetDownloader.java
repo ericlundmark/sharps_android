@@ -28,7 +28,6 @@ public class SheetDownloader {
 	public static String MY = "1";
 	public static String FAVOURITE = "0";
 
-	private NetworkMediator mediator = NetworkMediator.getSingletonObject();
 	private String mode;
 
 	public SheetDownloader(SQLiteDatabase database, String mode, String url) {
@@ -54,7 +53,7 @@ public class SheetDownloader {
 			HttpContext localContext = new BasicHttpContext();
 			// Bind custom cookie store to the local context
 			localContext.setAttribute(ClientContext.COOKIE_STORE,
-					mediator.getCockies());
+					SessionCookieStore.cookieStore);
 			ResponseHandler<String> responseHandler = new BasicResponseHandler();
 			str = hc.execute(post, responseHandler, localContext);
 		} catch (IOException e) {
@@ -115,6 +114,8 @@ public class SheetDownloader {
 							database.update(MySQLiteHelper.TABLE_SPREADSHEETS,
 									values, selection, null);
 						} else {
+							values.put(MySQLiteHelper.COLUMN_UNVIEWED_GAMES,
+									"0");
 							database.insert(MySQLiteHelper.TABLE_SPREADSHEETS,
 									null, values);
 						}

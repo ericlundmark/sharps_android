@@ -21,7 +21,6 @@ import Database.MySQLiteHelper;
 public class GameAdder extends Thread {
 	private ArrayList<String> myItems;
 	private String id;
-	private NetworkMediator mediator = NetworkMediator.getSingletonObject();
 	private String[] allColumns = { MySQLiteHelper.COLUMN_TEAM1,
 			MySQLiteHelper.COLUMN_TEAM2, MySQLiteHelper.COLUMN_DATE,
 			MySQLiteHelper.COLUMN_TIME, MySQLiteHelper.COLUMN_SIGN,
@@ -30,15 +29,15 @@ public class GameAdder extends Thread {
 			MySQLiteHelper.COLUMN_COMPANY, MySQLiteHelper.COLUMN_PERIOD,
 			MySQLiteHelper.COLUMN_INFO, MySQLiteHelper.COLUMN_REKARE,
 			MySQLiteHelper.COLUMN_AMOUNT, MySQLiteHelper.COLUMN_ODDS,
-			MySQLiteHelper.COLUMN_LIVE, MySQLiteHelper.COLUMN_LOCKED,
-			MySQLiteHelper.COLUMN_RESULT, MySQLiteHelper.COLUMN_ALIVE };
+			MySQLiteHelper.COLUMN_RESULT };
 	private String[] keys = { "team1", "team2", "date", "time", "sign",
 			"sign2", "sport", "country", "league", "bolag", "period", "info",
 			"rekare", "amount", "odds", "result" };
+
 	public GameAdder(ArrayList<String> myItems, String id) {
 		super();
-		this.myItems=myItems;
-		this.id=id;
+		this.myItems = myItems;
+		this.id = id;
 	}
 
 	@Override
@@ -49,26 +48,25 @@ public class GameAdder extends Thread {
 			int index = 0;
 			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
 			for (String item : myItems) {
-				if (!item.equals(allColumns[index])) {
-					nameValuePairs.add(new BasicNameValuePair(keys[index],
-							item));
+				if (!item.equals(allColumns[myItems.indexOf(item)])) {
+					nameValuePairs.add(new BasicNameValuePair(keys[myItems
+							.indexOf(item)], item));
 				}
-				index++;
 			}
 			HttpClient hc = new DefaultHttpClient();
 			HttpPost post = new HttpPost(
 					"http://www.sharps.se/forums//includes/ss/ajax_edit_spreadsheet.php?id="
 							+ id + "&a=1");
-			post.setEntity(new UrlEncodedFormEntity(nameValuePairs,"UTF-8"));
+			post.setEntity(new UrlEncodedFormEntity(nameValuePairs, "UTF-8"));
 			// Create local HTTP context
 			HttpContext localContext = new BasicHttpContext();
 			// Bind custom cookie store to the local context
-			localContext.setAttribute(ClientContext.COOKIE_STORE, mediator.getCockies());
+			localContext.setAttribute(ClientContext.COOKIE_STORE,
+					SessionCookieStore.cookieStore);
 			ResponseHandler<String> responseHandler = new BasicResponseHandler();
 			str = hc.execute(post, responseHandler, localContext);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-
 }

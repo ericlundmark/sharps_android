@@ -61,7 +61,7 @@
             android:windowSoftInputMode="adjustPan" >
         </activity>
         <activity
-            android:name="com.sharps.SettingsActivity"
+            android:name="com.sharps.main.SettingsActivity"
             android:label="@string/title_activity_settings" >
         </activity>
         <service android:name="com.sharps.main.SyncService"></service>

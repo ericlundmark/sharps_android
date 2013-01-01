@@ -26,14 +26,22 @@ import android.database.sqlite.SQLiteDatabase;
 
 import com.sharps.main.GamesActivity;
 
-public class GamesDownloader extends Observable{
-	private NetworkMediator mediator = NetworkMediator.getSingletonObject();
+public class GamesDownloader extends Observable implements Runnable {
 	private SQLiteDatabase database;
 	private int amountAdded = 0;
+	private String URL;
+	private String sheetID;
 
-	public GamesDownloader(SQLiteDatabase database, String URL) {
-
+	public GamesDownloader(SQLiteDatabase database, String sheetID, int page) {
 		this.database = database;
+		this.sheetID = sheetID;
+		this.URL = "http://www.sharps.se/forums/includes/ss/app_games.php?ssid="
+				+ sheetID + "&page=" + page;
+		GamesActivity.isLastPageReached = true;
+	}
+
+	@Override
+	public void run() {
 		String str = "";
 		try {
 			HttpParams httpParameters = new BasicHttpParams();
@@ -50,7 +58,7 @@ public class GamesDownloader extends Observable{
 			HttpContext localContext = new BasicHttpContext();
 			// Bind custom cookie store to the local context
 			localContext.setAttribute(ClientContext.COOKIE_STORE,
-					mediator.getCockies());
+					SessionCookieStore.cookieStore);
 			ResponseHandler<String> responseHandler = new BasicResponseHandler();
 			str = hc.execute(post, responseHandler, localContext);
 		} catch (IOException e) {
@@ -149,16 +157,16 @@ public class GamesDownloader extends Observable{
 								new String[] { MySQLiteHelper.COLUMN_GAMEID },
 								selection, null, null, null, null);
 						if (cursor.getCount() > 0) {
-							amountAdded++;
+							GamesActivity.isLastPageReached = false;
 							database.update(MySQLiteHelper.TABLE_GAMES, values,
 									selection, null);
 						} else if (values.size() > 0) {
+							GamesActivity.isLastPageReached = false;
 							amountAdded++;
 							database.insert(MySQLiteHelper.TABLE_GAMES, null,
 									values);
 						}
 						cursor.close();
-
 					}
 					break;
 				}
@@ -171,10 +179,8 @@ public class GamesDownloader extends Observable{
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
-			if (amountAdded == 0) {
-				GamesActivity.isLastPageReched = true;
-			}
-			notifyObservers(amountAdded);
+			setChanged();
+			notifyObservers(sheetID + ":" + amountAdded);
 		}
 	}
 

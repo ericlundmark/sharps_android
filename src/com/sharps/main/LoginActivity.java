@@ -1,5 +1,11 @@
 package com.sharps.main;
 
+import java.util.Iterator;
+import java.util.Observable;
+import java.util.Observer;
+
+import org.apache.http.cookie.Cookie;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
@@ -19,10 +25,10 @@ import android.widget.TextView;
 
 import com.cellr.noid.actionbar.ActionBarActivity;
 import com.sharps.R;
-import com.sharps.Network.NetworkMediator;
+import com.sharps.Network.LogginHandler;
+import com.sharps.Network.SessionCookieStore;
 
-public class LoginActivity extends ActionBarActivity implements LoginListener {
-	private NetworkMediator mediator = NetworkMediator.getSingletonObject();
+public class LoginActivity extends ActionBarActivity implements Observer {
 
 	/**
 	 * The default email to populate the email field with.
@@ -45,7 +51,6 @@ public class LoginActivity extends ActionBarActivity implements LoginListener {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_login);
-		mediator.setLoginListener(this);
 		box = (CheckBox) findViewById(R.id.checkBox1);
 		// Set up the login form.
 		mEmail = getIntent().getStringExtra(EXTRA_EMAIL);
@@ -95,23 +100,38 @@ public class LoginActivity extends ActionBarActivity implements LoginListener {
 	public void doLogin() {
 		InputMethodManager inputManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 		inputManager.hideSoftInputFromWindow(mPasswordView.getWindowToken(), 0);
-		if (mediator.gotInternet(getContext())) {
-			SharedPreferences.Editor Ed = sp1.edit();
-			if (box.isChecked()) {
-				Ed.putString("Unm", mEmail);
-				Ed.putString("Psw", mPassword);
-				Ed.commit();
-			} else {
-				Ed.clear();
-				Ed.commit();
-			}
-			mediator.login(mEmail, mPassword);
+		SharedPreferences.Editor Ed = sp1.edit();
+		if (box.isChecked()) {
+			Ed.putString("Unm", mEmail);
+			Ed.putString("Psw", mPassword);
+			Ed.commit();
 		} else {
-
+			Ed.clear();
+			Ed.commit();
 		}
+		login(mEmail, mPassword);
 	}
 
-	@Override
+	public synchronized void login(String username, String password) {
+		LogginHandler logginHandler = new LogginHandler(username, password);
+		logginHandler.addObserver(this);
+		new Thread(logginHandler).start();
+	}
+
+	public boolean isLoggedIn() {
+		Iterator<Cookie> iterator = SessionCookieStore.cookieStore.getCookies()
+				.iterator();
+		while (iterator.hasNext()) {
+			String string = iterator.next().toString();
+			if (string.startsWith(("vbseo"), 19) && string.contains("yes")) {
+				System.out.println("logged in");
+				return true;
+			}
+		}
+		return false;
+
+	}
+
 	public synchronized void loginFinished(boolean status) {
 
 		showProgress(false);
@@ -215,5 +235,17 @@ public class LoginActivity extends ActionBarActivity implements LoginListener {
 			mLoginStatusView.setVisibility(show ? View.VISIBLE : View.GONE);
 			mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
 		}
+	}
+
+	@Override
+	public void update(Observable arg0, Object arg1) {
+		runOnUiThread(new Runnable() {
+
+			@Override
+			public void run() {
+				loginFinished(isLoggedIn());
+			}
+		});
+
 	}
 }

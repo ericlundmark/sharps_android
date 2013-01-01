@@ -20,8 +20,6 @@ import android.text.TextUtils;
 import java.util.List;
 
 import com.sharps.R;
-import com.sharps.R.string;
-import com.sharps.R.xml;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On

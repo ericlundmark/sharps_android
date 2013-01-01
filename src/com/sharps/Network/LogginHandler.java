@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Observable;
 
-import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
@@ -20,33 +20,23 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 
-import android.os.AsyncTask;
-
-
-public class LogginHandler extends AsyncTask<String, Integer, Void>{
+public class LogginHandler extends Observable implements Runnable {
 	private String username;
 	private String password;
-	private NetworkMediator mediator=NetworkMediator.getSingletonObject();
-	private boolean loggedIn=false;
-	public LogginHandler(String username,String password) {
+
+	public LogginHandler(String username, String password) {
 		super();
-		this.username=username;
-		this.password=password;
-		execute();
+		this.username = username;
+		this.password = password;
 	}
 
 	@Override
-	protected void onPostExecute(Void result) {
-		mediator.loginListener.loginFinished(mediator.isLoggedIn());
-		super.onPostExecute(result);
-	}
-
-	@Override
-	protected Void doInBackground(String... params) {
+	public void run() {
 		HttpParams httpParameters = new BasicHttpParams();
 		int timeoutConnection = 3000;
-		HttpConnectionParams.setConnectionTimeout(httpParameters, timeoutConnection);
-		// Set the default socket timeout (SO_TIMEOUT) 
+		HttpConnectionParams.setConnectionTimeout(httpParameters,
+				timeoutConnection);
+		// Set the default socket timeout (SO_TIMEOUT)
 		// in milliseconds which is the timeout for waiting for data.
 		int timeoutSocket = 3000;
 		HttpConnectionParams.setSoTimeout(httpParameters, timeoutSocket);
@@ -65,9 +55,10 @@ public class LogginHandler extends AsyncTask<String, Integer, Void>{
 			// Create local HTTP context
 			HttpContext localContext = new BasicHttpContext();
 			// Bind custom cookie store to the local context
-			localContext.setAttribute(ClientContext.COOKIE_STORE,mediator.getCockies());
-			post.setEntity(new UrlEncodedFormEntity(nameValuePairs,"UTF-8"));
-			HttpResponse response = hc.execute(post, localContext);
+			localContext.setAttribute(ClientContext.COOKIE_STORE,
+					SessionCookieStore.cookieStore);
+			post.setEntity(new UrlEncodedFormEntity(nameValuePairs, "UTF-8"));
+			hc.execute(post, localContext);
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		} catch (ClientProtocolException e) {
@@ -75,7 +66,8 @@ public class LogginHandler extends AsyncTask<String, Integer, Void>{
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return null;
+		setChanged();
+		notifyObservers();
 	}
 
 }

@@ -2,6 +2,7 @@ package com.sharps.main;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +37,15 @@ public class TextFieldSimpleAdapter extends SimpleAdapter implements
 			int[] to) {
 		super(context, data, resource, from, to);
 		this.context = context;
+		int i = 0;
+		for (Iterator<? extends Map<String, ?>> iterator = data.iterator(); iterator
+				.hasNext();) {
+			Map<String, String> map = (Map<String, String>) iterator.next();
+			if (map != null) {
+				itemStrings.put(i, map.get("line1"));
+				i++;
+			}
+		}
 	}
 
 	@Override
@@ -64,7 +74,6 @@ public class TextFieldSimpleAdapter extends SimpleAdapter implements
 				itemStrings.put(position, line2);
 			} else {
 				editText.setText(line1);
-				itemStrings.put(position, line1);
 			}
 			TextView textView = (TextView) convertView
 					.findViewById(android.R.id.text2);

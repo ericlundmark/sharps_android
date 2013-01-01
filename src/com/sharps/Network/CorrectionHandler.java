@@ -13,14 +13,12 @@ import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 
 public class CorrectionHandler extends Thread {
-	NetworkMediator mediator;
 	String sheetID;
 	String gameID;
 	String result;
 
 	public CorrectionHandler(String sheetID, String gameID, String result) {
 		super();
-		mediator = NetworkMediator.getSingletonObject();
 		this.sheetID = sheetID;
 		this.gameID = gameID;
 		this.result = result;
@@ -36,7 +34,7 @@ public class CorrectionHandler extends Thread {
 		HttpContext localContext = new BasicHttpContext();
 		// Bind custom cookie store to the local context
 		localContext.setAttribute(ClientContext.COOKIE_STORE,
-				mediator.getCockies());
+				SessionCookieStore.cookieStore);
 		ResponseHandler<String> responseHandler = new BasicResponseHandler();
 		try {
 			hc.execute(post, responseHandler, localContext);

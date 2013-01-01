@@ -29,8 +29,8 @@ import org.xml.sax.SAXException;
 
 import android.os.AsyncTask;
 
-public class SearchGamesGetter extends AsyncTask<String, Integer,ArrayList<Hashtable<String, String>> > {
-	private NetworkMediator mediator = NetworkMediator.getSingletonObject();
+public class SearchGamesGetter extends
+		AsyncTask<String, Integer, ArrayList<Hashtable<String, String>>> {
 	public SearchGamesGetter(String URL) {
 		super();
 		execute(URL);
@@ -43,8 +43,9 @@ public class SearchGamesGetter extends AsyncTask<String, Integer,ArrayList<Hasht
 		try {
 			HttpParams httpParameters = new BasicHttpParams();
 			int timeoutConnection = 3000;
-			HttpConnectionParams.setConnectionTimeout(httpParameters, timeoutConnection);
-			// Set the default socket timeout (SO_TIMEOUT) 
+			HttpConnectionParams.setConnectionTimeout(httpParameters,
+					timeoutConnection);
+			// Set the default socket timeout (SO_TIMEOUT)
 			// in milliseconds which is the timeout for waiting for data.
 			int timeoutSocket = 3000;
 			HttpConnectionParams.setSoTimeout(httpParameters, timeoutSocket);
@@ -54,7 +55,7 @@ public class SearchGamesGetter extends AsyncTask<String, Integer,ArrayList<Hasht
 			HttpContext localContext = new BasicHttpContext();
 			// Bind custom cookie store to the local context
 			localContext.setAttribute(ClientContext.COOKIE_STORE,
-					mediator.getCockies());
+					SessionCookieStore.cookieStore);
 			ResponseHandler<String> responseHandler = new BasicResponseHandler();
 			str = hc.execute(post, responseHandler, localContext);
 			System.out.println("Inkommande: " + str);
@@ -64,9 +65,8 @@ public class SearchGamesGetter extends AsyncTask<String, Integer,ArrayList<Hasht
 		return parseContent(str);
 	}
 
-	private ArrayList<Hashtable<String, String>> parseContent(
-			String str) {
-		ArrayList<Hashtable<String, String>> map = new ArrayList<Hashtable<String,String>>();
+	private ArrayList<Hashtable<String, String>> parseContent(String str) {
+		ArrayList<Hashtable<String, String>> map = new ArrayList<Hashtable<String, String>>();
 		try {
 			DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory
 					.newInstance();
@@ -97,7 +97,7 @@ public class SearchGamesGetter extends AsyncTask<String, Integer,ArrayList<Hasht
 					}
 					map.add(table);
 				}// end of if clause
-				
+
 			}// end of for loop with s var
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -110,6 +110,5 @@ public class SearchGamesGetter extends AsyncTask<String, Integer,ArrayList<Hasht
 		}
 		return map;
 	}
-
 
 }

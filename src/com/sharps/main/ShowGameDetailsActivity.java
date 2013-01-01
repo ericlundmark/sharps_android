@@ -118,7 +118,7 @@ public class ShowGameDetailsActivity extends ActionBarListActivity {
 				spreadsheetColumns, MySQLiteHelper.COLUMN_OWNER + " = 1", null,
 				null, null, null);
 		final MyAdapter temp = new MyAdapter(getApplicationContext(),
-				android.R.layout.simple_list_item_2, cursor,
+				R.layout.simple_list_item_2_black_text, cursor,
 				spreadsheetColumns, to, 0) {
 
 			@Override
@@ -174,7 +174,8 @@ public class ShowGameDetailsActivity extends ActionBarListActivity {
 		} else {
 			// Inflate the menu; this adds items to the action bar if it is
 			// present.
-			getMenuInflater().inflate(R.menu.activity_games, menu);
+			getMenuInflater()
+					.inflate(R.menu.activity_show_game_details_2, menu);
 		}
 		c.close();
 		return super.onCreateOptionsMenu(menu);

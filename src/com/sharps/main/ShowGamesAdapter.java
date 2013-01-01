@@ -26,7 +26,7 @@ public abstract class ShowGamesAdapter extends MyAdapter {
 				.getColumnIndex(MySQLiteHelper.COLUMN_SIGN));
 		if (sign.equals("1")) {
 			title.setText(Html.fromHtml("<b>" + team1 + "</b>-" + team2));
-		} else if (sign.equals(2)) {
+		} else if (sign.equals("2")) {
 			title.setText(Html.fromHtml(team1 + "-<b>" + team2 + "</b>"));
 		} else {
 			title.setText(team1 + "-" + team2);

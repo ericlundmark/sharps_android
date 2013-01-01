@@ -11,6 +11,7 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -47,22 +48,24 @@ public class SyncService extends Service implements Observer {
 			public void run() {
 				ArrayList<String> sheetID = getAllSheetID();
 				amountOfSheets = sheetID.size();
+				System.out.println(amountOfSheets);
 				for (String string : sheetID) {
 					downloadGames(0, string);
 				}
 			}
-		}, 0, 600000);
+		}, 0, 300000);
 	}
 
-	private void generateNotification() {
+	private void generateNotification(int i) {
 		NotificationManager notificationManager = (NotificationManager) getApplicationContext()
 				.getSystemService(Context.NOTIFICATION_SERVICE);
-		int icon = R.drawable.ic_home;
+		int icon = R.drawable.ic_launcher;
 		Intent notificationIntent = new Intent(getApplicationContext(),
 				SpreadsheetActivity.class);
 		// set intent so it does not start a new activity
 		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
 				| Intent.FLAG_ACTIVITY_SINGLE_TOP);
+		notificationIntent.putExtra("update", "1");
 		PendingIntent intent = PendingIntent.getActivity(
 				getApplicationContext(), 0, notificationIntent, 0);
 		Uri defaultSound = RingtoneManager
@@ -70,7 +73,7 @@ public class SyncService extends Service implements Observer {
 
 		Notification notification = new NotificationCompat.Builder(
 				getApplicationContext()).setContentTitle("Notification")
-				.setContentText("Nya spel").setContentIntent(intent)
+				.setContentText(i + " nya spel").setContentIntent(intent)
 				.setSmallIcon(icon).setLights(Color.YELLOW, 1, 2)
 				.setAutoCancel(true).setSound(defaultSound).build();
 
@@ -78,32 +81,42 @@ public class SyncService extends Service implements Observer {
 	}
 
 	private synchronized void downloadGames(final int page, final String sheetID) {
-		GamesDownloader downloader = new GamesDownloader(database,
-				"http://www.sharps.se/forums/includes/ss/app_games.php?ssid="
-						+ sheetID + "&page=" + page);
-		downloader.addObserver(this);
+		GamesDownloader gamesDownloader = new GamesDownloader(database,
+				sheetID, page);
+		gamesDownloader.addObserver(this);
+		new Thread(gamesDownloader).start();
 	}
 
 	private synchronized ArrayList<String> getAllSheetID() {
 		ArrayList<String> sheetID = new ArrayList<String>();
 		Cursor cursor = database.query(MySQLiteHelper.TABLE_SPREADSHEETS,
-				new String[] { MySQLiteHelper.COLUMN_SHEETID, }, null, null,
+				new String[] { MySQLiteHelper.COLUMN_SHEETID, }, MySQLiteHelper.COLUMN_OWNER + " = 0", null,
 				null, null, null);
 		while (cursor.moveToNext()) {
 			String str = cursor.getString(cursor
 					.getColumnIndex(MySQLiteHelper.COLUMN_SHEETID));
 			sheetID.add(str);
 		}
+		cursor.close();
 		return sheetID;
 	}
 
 	@Override
-	public synchronized void update(Observable observable, Object data) {
-		amountOfNewGames += (Integer) data;
+	public void update(Observable observable, Object data) {
+		String[] updateData = ((String) data).split(":");
+		amountOfNewGames += Integer.parseInt(updateData[1]);
+		ContentValues contentValues = new ContentValues();
+		contentValues.put(MySQLiteHelper.COLUMN_UNVIEWED_GAMES, updateData[1]);
+		String where = MySQLiteHelper.COLUMN_SHEETID + " = " + updateData[0];
+		database.update(MySQLiteHelper.TABLE_SPREADSHEETS, contentValues, where,
+				null);
+		sheetsDoneDownloading++;
 		if (amountOfSheets == sheetsDoneDownloading) {
-			generateNotification();
-		} else {
-			sheetsDoneDownloading++;
+			if (amountOfNewGames > 0) {
+				generateNotification(amountOfNewGames);
+			}
+			amountOfNewGames = 0;
+			sheetsDoneDownloading = 0;
 		}
 	}
 }

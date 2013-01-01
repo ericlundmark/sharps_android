@@ -1,5 +1,8 @@
 package com.sharps.main;
 
+import java.util.Observable;
+import java.util.Observer;
+
 import Database.MySQLiteHelper;
 import android.content.Intent;
 import android.database.Cursor;
@@ -19,7 +22,7 @@ import com.sharps.R;
 import com.sharps.Network.GamesDownloader;
 
 public class GamesActivity extends ActionBarListActivity implements
-		OnScrollListener, OnItemClickListener {
+		OnScrollListener, OnItemClickListener,Observer {
 	private String sheetID;
 	private Cursor cursor;
 	private SQLiteDatabase database;
@@ -33,7 +36,7 @@ public class GamesActivity extends ActionBarListActivity implements
 	private String selection;
 	private String orderBy = MySQLiteHelper.COLUMN_DATE + " DESC ";
 	private boolean downloading = false;
-	public static boolean isLastPageReched = false;
+	public static boolean isLastPageReached = false;
 	private int page = 0;
 
 	@Override
@@ -81,7 +84,7 @@ public class GamesActivity extends ActionBarListActivity implements
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		isLastPageReched = false;
+		isLastPageReached = false;
 		cursor.close();
 	}
 
@@ -91,7 +94,7 @@ public class GamesActivity extends ActionBarListActivity implements
 		boolean loadMore = false;
 		loadMore = /* maybe add a padding */
 		firstVisibleItem + visibleItemCount >= totalItemCount
-				&& !isLastPageReched;
+				&& !isLastPageReached;
 		if (loadMore && !downloading) {
 			downloadGames(page);
 			page++;
@@ -99,36 +102,13 @@ public class GamesActivity extends ActionBarListActivity implements
 		}
 	}
 
-	private synchronized void downloadGames(final int page) {
+	private void downloadGames(final int page) {
 		System.out.println("Downloading games");
 		setProgressBarIndeterminateVisibility(true);
 		downloading = true;
-		new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				new GamesDownloader(database,
-						"http://www.sharps.se/forums/includes/ss/app_games.php?ssid="
-								+ sheetID + "&page=" + page);
-				runOnUiThread(new Runnable() {
-
-					@Override
-					public void run() {
-
-						if (getListAdapter() != null) {
-							cursor = database.query(MySQLiteHelper.TABLE_GAMES,
-									allColumns, selection, null, null, null,
-									orderBy);
-							((ShowGamesAdapter) getListAdapter())
-									.changeCursor(cursor);
-							setProgressBarIndeterminateVisibility(false);
-							downloading = false;
-						}
-
-					}
-				});
-			}
-		}).start();
+		GamesDownloader gamesDownloader = new GamesDownloader(database,sheetID,page);
+		gamesDownloader.addObserver(this);
+		new Thread(gamesDownloader).start();
 	}
 
 	@Override
@@ -184,5 +164,26 @@ public class GamesActivity extends ActionBarListActivity implements
 		myIntent.putExtra("gameID", gameID);
 		myIntent.putExtra("sheetID", sheetID);
 		startActivity(myIntent);
+	}
+
+	@Override
+	public void update(Observable observable, Object data) {
+		runOnUiThread(new Runnable() {
+
+			@Override
+			public void run() {
+
+				if (getListAdapter() != null) {
+					cursor = database.query(MySQLiteHelper.TABLE_GAMES,
+							allColumns, selection, null, null, null,
+							orderBy);
+					((ShowGamesAdapter) getListAdapter())
+							.changeCursor(cursor);
+					setProgressBarIndeterminateVisibility(false);
+					downloading = false;
+				}
+
+			}
+		});
 	}
 }

@@ -16,6 +16,7 @@ public class MySQLiteHelper extends SQLiteOpenHelper {
 	public static final String COLUMN_TITLE = "title";
 	public static final String COLUMN_LAST_ADDED = "lastadded";
 	public static final String COLUMN_NUMBER_OF_GAMES = "games";
+	public static final String COLUMN_UNVIEWED_GAMES = "unviewed";
 	// Game table columns
 	public static final String COLUMN_DATE = "Datum";
 	public static final String COLUMN_TIME = "Tid";
@@ -48,7 +49,8 @@ public class MySQLiteHelper extends SQLiteOpenHelper {
 			+ " text not null, " + COLUMN_SHEETID + " text not null, "
 			+ COLUMN_OWNER + " text not null, " + COLUMN_NUMBER_OF_GAMES
 			+ " text not null, " + COLUMN_LAST_ADDED + " text not null, "
-			+ COLUMN_TITLE + " text not null);";
+			+ COLUMN_UNVIEWED_GAMES + " text not null, " + COLUMN_TITLE
+			+ " text not null);";
 
 	private static final String DATABASE_CREATE_GAMES = "create table "
 			+ TABLE_GAMES + "(" + COLUMN_ID

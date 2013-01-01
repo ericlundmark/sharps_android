@@ -91,9 +91,15 @@ public class AddGameActivity extends ActionBarListActivity implements
 		for (int i = 0; i < allColumns.length; i++) {
 			String str = cursor.getString(cursor.getColumnIndex(allColumns[i]));
 			if (!str.equals("")) {
+				String line1 = cursor.getString(cursor
+						.getColumnIndex(allColumns[i]));
 				HashMap<String, String> map = new HashMap<String, String>();
-				map.put(from[0],
-						cursor.getString(cursor.getColumnIndex(allColumns[i])));
+				if (line1.equals("")) {
+					map.put(from[0], allColumns[i]);
+				} else {
+					map.put(from[0], line1);
+				}
+
 				map.put(from[1], allColumns[i]);
 				list.add(map);
 			}
@@ -180,9 +186,14 @@ public class AddGameActivity extends ActionBarListActivity implements
 	private ArrayList<HashMap<String, String>> getDataFromList(
 			ArrayList<String> arrayList) {
 		ArrayList<HashMap<String, String>> list = new ArrayList<HashMap<String, String>>();
-		for (int i = 0; i < arrayList.size(); i++) {
+		for (int i = 0; i < allColumns.length; i++) {
 			HashMap<String, String> map = new HashMap<String, String>();
-			map.put(from[0], arrayList.get(i));
+			String line1 = arrayList.get(i);
+			if (line1 == null) {
+				map.put(from[0], allColumns[i]);
+			} else {
+				map.put(from[0], line1);
+			}
 			map.put(from[1], allColumns[i]);
 			list.add(map);
 		}
@@ -204,7 +215,9 @@ public class AddGameActivity extends ActionBarListActivity implements
 
 		@Override
 		public void onClick(View v) {
-			layGame(adapter.getItemStrings(), sheetID);
+			layGame(((TextFieldSimpleAdapter) getListAdapter())
+					.getItemStrings(),
+					sheetID);
 			finish();
 		}
 

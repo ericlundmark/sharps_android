@@ -1,6 +1,7 @@
 package com.sharps.main;
 
 import Database.MySQLiteHelper;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -14,19 +15,18 @@ import android.widget.AdapterView.OnItemClickListener;
 
 import com.cellr.noid.actionbar.ActionBarListActivity;
 import com.sharps.R;
-import com.sharps.Network.NetworkMediator;
 import com.sharps.Network.SheetDownloader;
 
 public class SpreadsheetActivity extends ActionBarListActivity implements
 		OnItemClickListener {
 	public final static String CATEGORY_MY_SPREADSHEETS = "Mina spreadsheets";
 	public final static String CATEGORY_MY_FAVOURITES = "Mina favoriter";
-	NetworkMediator mediator = NetworkMediator.getSingletonObject();
 	private SQLiteDatabase database;
 	private String[] allColumns = { MySQLiteHelper.COLUMN_TITLE,
 			MySQLiteHelper.COLUMN_ROI, MySQLiteHelper.COLUMN_SHEETID,
 			MySQLiteHelper.COLUMN_ID, MySQLiteHelper.COLUMN_OWNER,
-			MySQLiteHelper.COLUMN_LAST_ADDED };
+			MySQLiteHelper.COLUMN_LAST_ADDED,
+			MySQLiteHelper.COLUMN_UNVIEWED_GAMES };
 	private Cursor cursor;
 	private int[] to = { android.R.id.text1, android.R.id.text2 };
 	private String orderBy = MySQLiteHelper.COLUMN_LAST_ADDED + " DESC ";
@@ -43,6 +43,15 @@ public class SpreadsheetActivity extends ActionBarListActivity implements
 		getListView().setOnItemClickListener(this);
 		downloadSpreadsheets();
 		getActionBarHelper().setRefreshActionItemState(true);
+	}
+
+	@Override
+	protected void onNewIntent(Intent intent) {
+		super.onNewIntent(intent);
+		if (intent.hasExtra("update")) {
+			downloadSpreadsheets();
+			System.out.println("Updating spreadsheets");
+		}
 	}
 
 	@Override
@@ -71,6 +80,20 @@ public class SpreadsheetActivity extends ActionBarListActivity implements
 					return Color.GRAY;
 				}
 			}
+
+			@Override
+			public int getBackgroundColor(Cursor c) {
+				// TODO strul med bakgrundsfärgen, ändras tillbaka till grå utan
+				// att nya har lagts till, kontrollera vad som sker.
+				String str = c.getString(c
+						.getColumnIndex(MySQLiteHelper.COLUMN_UNVIEWED_GAMES));
+				int i = Integer.parseInt(str);
+				if (i > 0) {
+					return Color.LTGRAY;
+				}
+				return super.getBackgroundColor(cursor);
+			}
+
 		};
 		adapter.addSection(CATEGORY_MY_SPREADSHEETS, temp);
 		cursor = database
@@ -93,6 +116,17 @@ public class SpreadsheetActivity extends ActionBarListActivity implements
 				} else {
 					return Color.GRAY;
 				}
+			}
+
+			@Override
+			public int getBackgroundColor(Cursor c) {
+				String str = c.getString(c
+						.getColumnIndex(MySQLiteHelper.COLUMN_UNVIEWED_GAMES));
+				int i = Integer.parseInt(str);
+				if (i > 0) {
+					return Color.LTGRAY;
+				}
+				return super.getBackgroundColor(cursor);
 			}
 		};
 		adapter.addSection(CATEGORY_MY_FAVOURITES, temp);
@@ -132,11 +166,9 @@ public class SpreadsheetActivity extends ActionBarListActivity implements
 
 			@Override
 			public void run() {
-				new SheetDownloader(database,
-						SheetDownloader.MY,
+				new SheetDownloader(database, SheetDownloader.MY,
 						"http://www.sharps.se/forums/includes/ss/app_mysheets.php");
-				new SheetDownloader(database,
-						SheetDownloader.FAVOURITE,
+				new SheetDownloader(database, SheetDownloader.FAVOURITE,
 						"http://www.sharps.se/forums/includes/ss/app_favsheets.php");
 				runOnUiThread(new Runnable() {
 
@@ -175,6 +207,11 @@ public class SpreadsheetActivity extends ActionBarListActivity implements
 		String str = c.getString(c
 				.getColumnIndex(MySQLiteHelper.COLUMN_SHEETID));
 		intent.putExtra("sheetID", str);
+		ContentValues contentValues = new ContentValues();
+		contentValues.put(MySQLiteHelper.COLUMN_UNVIEWED_GAMES, 0);
+		String where = MySQLiteHelper.COLUMN_SHEETID + " = " + str;
+		database.update(MySQLiteHelper.TABLE_SPREADSHEETS, contentValues,
+				where, null);
 		startActivity(intent);
 	}
 
