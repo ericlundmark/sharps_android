@@ -26,7 +26,6 @@ import android.widget.TextView;
 import com.cellr.noid.actionbar.ActionBarActivity;
 import com.sharps.R;
 import com.sharps.Network.LogginHandler;
-import com.sharps.Network.SessionCookieStore;
 
 public class LoginActivity extends ActionBarActivity implements Observer {
 
@@ -89,8 +88,6 @@ public class LoginActivity extends ActionBarActivity implements Observer {
 						attemptLogin();
 					}
 				});
-		mEmailView.setText("luntfen");
-		mPasswordView.setText("ERIlun849");
 	}
 
 	public Context getContext() {
@@ -119,7 +116,7 @@ public class LoginActivity extends ActionBarActivity implements Observer {
 	}
 
 	public boolean isLoggedIn() {
-		Iterator<Cookie> iterator = SessionCookieStore.cookieStore.getCookies()
+		Iterator<Cookie> iterator = SyncService.cookieStore.getCookies()
 				.iterator();
 		while (iterator.hasNext()) {
 			String string = iterator.next().toString();

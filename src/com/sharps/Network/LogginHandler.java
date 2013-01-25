@@ -20,6 +20,8 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 
+import com.sharps.main.SyncService;
+
 public class LogginHandler extends Observable implements Runnable {
 	private String username;
 	private String password;
@@ -56,7 +58,7 @@ public class LogginHandler extends Observable implements Runnable {
 			HttpContext localContext = new BasicHttpContext();
 			// Bind custom cookie store to the local context
 			localContext.setAttribute(ClientContext.COOKIE_STORE,
-					SessionCookieStore.cookieStore);
+					SyncService.cookieStore);
 			post.setEntity(new UrlEncodedFormEntity(nameValuePairs, "UTF-8"));
 			hc.execute(post, localContext);
 		} catch (UnsupportedEncodingException e) {

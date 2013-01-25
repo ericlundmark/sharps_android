@@ -2,8 +2,9 @@ package com.sharps.main;
 
 import Database.MySQLiteHelper;
 import android.app.Application;
-import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
+
+import com.commonsware.cwac.wakeful.WakefulIntentService;
 
 public class MyApplication extends Application {
 	private MySQLiteHelper dbHelper;
@@ -13,17 +14,11 @@ public class MyApplication extends Application {
 	public void onCreate() {
 		dbHelper = new MySQLiteHelper(getApplicationContext());
 		database = dbHelper.getWritableDatabase();
-		startService(new Intent(this, SyncService.class));
+		WakefulIntentService.scheduleAlarms(new AppListener(),
+                this.getApplicationContext(), false);
 	}
 
 	public SQLiteDatabase getDatabase() {
 		return database;
 	}
-
-	@Override
-	public void onTerminate() {
-		super.onTerminate();
-		database.close();
-	}
-
 }

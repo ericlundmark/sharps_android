@@ -81,19 +81,6 @@ public class SpreadsheetActivity extends ActionBarListActivity implements
 				}
 			}
 
-			@Override
-			public int getBackgroundColor(Cursor c) {
-				// TODO strul med bakgrundsfärgen, ändras tillbaka till grå utan
-				// att nya har lagts till, kontrollera vad som sker.
-				String str = c.getString(c
-						.getColumnIndex(MySQLiteHelper.COLUMN_UNVIEWED_GAMES));
-				int i = Integer.parseInt(str);
-				if (i > 0) {
-					return Color.LTGRAY;
-				}
-				return super.getBackgroundColor(cursor);
-			}
-
 		};
 		adapter.addSection(CATEGORY_MY_SPREADSHEETS, temp);
 		cursor = database
@@ -146,10 +133,6 @@ public class SpreadsheetActivity extends ActionBarListActivity implements
 			getActionBarHelper().setRefreshActionItemState(true);
 			downloadSpreadsheets();
 			break;
-		case R.id.menu_settings:
-			Intent intent = new Intent(getApplicationContext(),
-					SettingsActivity.class);
-			startActivity(intent);
 		}
 		return super.onOptionsItemSelected(item);
 	}

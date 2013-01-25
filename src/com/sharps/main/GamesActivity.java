@@ -22,7 +22,7 @@ import com.sharps.R;
 import com.sharps.Network.GamesDownloader;
 
 public class GamesActivity extends ActionBarListActivity implements
-		OnScrollListener, OnItemClickListener,Observer {
+		OnScrollListener, OnItemClickListener, Observer {
 	private String sheetID;
 	private Cursor cursor;
 	private SQLiteDatabase database;
@@ -34,9 +34,9 @@ public class GamesActivity extends ActionBarListActivity implements
 			MySQLiteHelper.COLUMN_SHEETID, MySQLiteHelper.COLUMN_RESULT,
 			MySQLiteHelper.COLUMN_ID };
 	private String selection;
-	private String orderBy = MySQLiteHelper.COLUMN_DATE + " DESC ";
+	private String orderBy = MySQLiteHelper.COLUMN_DATE + " DESC , "
+			+ MySQLiteHelper.COLUMN_DATE + " ASC";
 	private boolean downloading = false;
-	public static boolean isLastPageReached = false;
 	private int page = 0;
 
 	@Override
@@ -84,29 +84,40 @@ public class GamesActivity extends ActionBarListActivity implements
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		isLastPageReached = false;
 		cursor.close();
 	}
 
 	@Override
 	public void onScroll(AbsListView view, int firstVisibleItem,
 			int visibleItemCount, int totalItemCount) {
-		boolean loadMore = false;
-		loadMore = /* maybe add a padding */
-		firstVisibleItem + visibleItemCount >= totalItemCount
-				&& !isLastPageReached;
-		if (loadMore && !downloading) {
-			downloadGames(page);
-			page++;
-			downloading = true;
+		if (cursor != null) {
+			boolean loadMore = false;
+			Cursor c = database.query(MySQLiteHelper.TABLE_SPREADSHEETS,
+					new String[] { MySQLiteHelper.COLUMN_NUMBER_OF_GAMES,
+							MySQLiteHelper.COLUMN_SHEETID }, selection, null,
+					null, null, null);
+			c.moveToFirst();
+			String count = c.getString(c.getPosition());
+			int noOfGames = Integer.parseInt(count);
+			loadMore = /* maybe add a padding */
+			firstVisibleItem + visibleItemCount >= totalItemCount
+					&& cursor.getCount() != noOfGames;
+
+			if (loadMore && !downloading) {
+				downloadGames(page);
+				page++;
+				downloading = true;
+			}
 		}
+
 	}
 
 	private void downloadGames(final int page) {
 		System.out.println("Downloading games");
 		setProgressBarIndeterminateVisibility(true);
 		downloading = true;
-		GamesDownloader gamesDownloader = new GamesDownloader(database,sheetID,page);
+		GamesDownloader gamesDownloader = new GamesDownloader(database,
+				sheetID, page);
 		gamesDownloader.addObserver(this);
 		new Thread(gamesDownloader).start();
 	}
@@ -175,10 +186,8 @@ public class GamesActivity extends ActionBarListActivity implements
 
 				if (getListAdapter() != null) {
 					cursor = database.query(MySQLiteHelper.TABLE_GAMES,
-							allColumns, selection, null, null, null,
-							orderBy);
-					((ShowGamesAdapter) getListAdapter())
-							.changeCursor(cursor);
+							allColumns, selection, null, null, null, orderBy);
+					((ShowGamesAdapter) getListAdapter()).changeCursor(cursor);
 					setProgressBarIndeterminateVisibility(false);
 					downloading = false;
 				}

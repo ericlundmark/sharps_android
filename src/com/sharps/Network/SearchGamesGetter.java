@@ -29,6 +29,8 @@ import org.xml.sax.SAXException;
 
 import android.os.AsyncTask;
 
+import com.sharps.main.SyncService;
+
 public class SearchGamesGetter extends
 		AsyncTask<String, Integer, ArrayList<Hashtable<String, String>>> {
 	public SearchGamesGetter(String URL) {
@@ -55,7 +57,7 @@ public class SearchGamesGetter extends
 			HttpContext localContext = new BasicHttpContext();
 			// Bind custom cookie store to the local context
 			localContext.setAttribute(ClientContext.COOKIE_STORE,
-					SessionCookieStore.cookieStore);
+					SyncService.cookieStore);
 			ResponseHandler<String> responseHandler = new BasicResponseHandler();
 			str = hc.execute(post, responseHandler, localContext);
 			System.out.println("Inkommande: " + str);

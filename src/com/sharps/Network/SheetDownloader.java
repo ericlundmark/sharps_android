@@ -23,6 +23,8 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import com.sharps.main.SyncService;
+
 public class SheetDownloader {
 	private SQLiteDatabase database;
 	public static String MY = "1";
@@ -53,7 +55,7 @@ public class SheetDownloader {
 			HttpContext localContext = new BasicHttpContext();
 			// Bind custom cookie store to the local context
 			localContext.setAttribute(ClientContext.COOKIE_STORE,
-					SessionCookieStore.cookieStore);
+					SyncService.cookieStore);
 			ResponseHandler<String> responseHandler = new BasicResponseHandler();
 			str = hc.execute(post, responseHandler, localContext);
 		} catch (IOException e) {
@@ -90,7 +92,7 @@ public class SheetDownloader {
 					} else if (tagName.equalsIgnoreCase("lastadded")) {
 						values.put(MySQLiteHelper.COLUMN_LAST_ADDED,
 								readText(parser));
-					} else if (tagName.equalsIgnoreCase("games")) {
+					} else if (tagName.equalsIgnoreCase("allgames")) {
 						values.put(MySQLiteHelper.COLUMN_NUMBER_OF_GAMES,
 								readText(parser));
 					}

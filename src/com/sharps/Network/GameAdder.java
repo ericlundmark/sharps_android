@@ -18,6 +18,8 @@ import org.apache.http.protocol.HttpContext;
 
 import Database.MySQLiteHelper;
 
+import com.sharps.main.SyncService;
+
 public class GameAdder extends Thread {
 	private ArrayList<String> myItems;
 	private String id;
@@ -62,7 +64,7 @@ public class GameAdder extends Thread {
 			HttpContext localContext = new BasicHttpContext();
 			// Bind custom cookie store to the local context
 			localContext.setAttribute(ClientContext.COOKIE_STORE,
-					SessionCookieStore.cookieStore);
+					SyncService.cookieStore);
 			ResponseHandler<String> responseHandler = new BasicResponseHandler();
 			str = hc.execute(post, responseHandler, localContext);
 		} catch (IOException e) {

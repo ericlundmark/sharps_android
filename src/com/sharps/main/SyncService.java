@@ -3,57 +3,38 @@ package com.sharps.main;
 import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.Timer;
-import java.util.TimerTask;
+
+import org.apache.http.client.CookieStore;
+import org.apache.http.impl.client.BasicCookieStore;
 
 import Database.MySQLiteHelper;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.Service;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
+import android.graphics.Paint.Join;
 import android.media.RingtoneManager;
 import android.net.Uri;
-import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 
+import com.commonsware.cwac.wakeful.WakefulIntentService;
 import com.sharps.R;
 import com.sharps.Network.GamesDownloader;
 
-public class SyncService extends Service implements Observer {
-
+public class SyncService extends WakefulIntentService implements Observer {
 	private SQLiteDatabase database;
 	private int amountOfSheets = 0;
 	private int sheetsDoneDownloading = 0;
 	private int amountOfNewGames = 0;
+	public static CookieStore cookieStore = new BasicCookieStore();
 
-	@Override
-	public IBinder onBind(Intent intent) {
-		return null;
-	}
-
-	@Override
-	public void onCreate() {
-		super.onCreate();
-		database = ((MyApplication) getApplication()).getDatabase();
-		Timer timer = new Timer();
-		timer.scheduleAtFixedRate(new TimerTask() {
-
-			@Override
-			public void run() {
-				ArrayList<String> sheetID = getAllSheetID();
-				amountOfSheets = sheetID.size();
-				System.out.println(amountOfSheets);
-				for (String string : sheetID) {
-					downloadGames(0, string);
-				}
-			}
-		}, 0, 300000);
+	public SyncService() {
+		super("SyncService");
 	}
 
 	private void generateNotification(int i) {
@@ -80,18 +61,20 @@ public class SyncService extends Service implements Observer {
 		notificationManager.notify(0, notification);
 	}
 
-	private synchronized void downloadGames(final int page, final String sheetID) {
+	private Thread downloadGames(final int page, final String sheetID) {
 		GamesDownloader gamesDownloader = new GamesDownloader(database,
 				sheetID, page);
 		gamesDownloader.addObserver(this);
-		new Thread(gamesDownloader).start();
+		Thread t=new Thread(gamesDownloader);
+		t.start();
+		return t;
 	}
 
-	private synchronized ArrayList<String> getAllSheetID() {
+	private ArrayList<String> getAllSheetID() {
 		ArrayList<String> sheetID = new ArrayList<String>();
 		Cursor cursor = database.query(MySQLiteHelper.TABLE_SPREADSHEETS,
-				new String[] { MySQLiteHelper.COLUMN_SHEETID, }, MySQLiteHelper.COLUMN_OWNER + " = 0", null,
-				null, null, null);
+				new String[] { MySQLiteHelper.COLUMN_SHEETID, },
+				MySQLiteHelper.COLUMN_OWNER + " = 0", null, null, null, null);
 		while (cursor.moveToNext()) {
 			String str = cursor.getString(cursor
 					.getColumnIndex(MySQLiteHelper.COLUMN_SHEETID));
@@ -102,14 +85,14 @@ public class SyncService extends Service implements Observer {
 	}
 
 	@Override
-	public void update(Observable observable, Object data) {
+	public synchronized void update(Observable observable, Object data) {
 		String[] updateData = ((String) data).split(":");
 		amountOfNewGames += Integer.parseInt(updateData[1]);
 		ContentValues contentValues = new ContentValues();
 		contentValues.put(MySQLiteHelper.COLUMN_UNVIEWED_GAMES, updateData[1]);
 		String where = MySQLiteHelper.COLUMN_SHEETID + " = " + updateData[0];
-		database.update(MySQLiteHelper.TABLE_SPREADSHEETS, contentValues, where,
-				null);
+		database.update(MySQLiteHelper.TABLE_SPREADSHEETS, contentValues,
+				where, null);
 		sheetsDoneDownloading++;
 		if (amountOfSheets == sheetsDoneDownloading) {
 			if (amountOfNewGames > 0) {
@@ -119,4 +102,23 @@ public class SyncService extends Service implements Observer {
 			sheetsDoneDownloading = 0;
 		}
 	}
+
+	@Override
+	protected void doWakefulWork(Intent arg0) {
+		database = ((MyApplication) getApplication()).getDatabase();
+		ArrayList<String> sheetID = getAllSheetID();
+		ArrayList<Thread> threads = new ArrayList<Thread>();
+		amountOfSheets = sheetID.size();
+		for (String string : sheetID) {
+			threads.add(downloadGames(0, string));
+		}
+		for (int i = 0; i < threads.size(); i++){
+			try {
+				threads.get(i).join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
 }

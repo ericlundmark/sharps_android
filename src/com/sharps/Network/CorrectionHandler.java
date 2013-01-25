@@ -12,6 +12,8 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 
+import com.sharps.main.SyncService;
+
 public class CorrectionHandler extends Thread {
 	String sheetID;
 	String gameID;
@@ -34,7 +36,7 @@ public class CorrectionHandler extends Thread {
 		HttpContext localContext = new BasicHttpContext();
 		// Bind custom cookie store to the local context
 		localContext.setAttribute(ClientContext.COOKIE_STORE,
-				SessionCookieStore.cookieStore);
+				SyncService.cookieStore);
 		ResponseHandler<String> responseHandler = new BasicResponseHandler();
 		try {
 			hc.execute(post, responseHandler, localContext);

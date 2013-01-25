@@ -24,7 +24,7 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.sharps.main.GamesActivity;
+import com.sharps.main.SyncService;
 
 public class GamesDownloader extends Observable implements Runnable {
 	private SQLiteDatabase database;
@@ -37,7 +37,6 @@ public class GamesDownloader extends Observable implements Runnable {
 		this.sheetID = sheetID;
 		this.URL = "http://www.sharps.se/forums/includes/ss/app_games.php?ssid="
 				+ sheetID + "&page=" + page;
-		GamesActivity.isLastPageReached = true;
 	}
 
 	@Override
@@ -58,7 +57,7 @@ public class GamesDownloader extends Observable implements Runnable {
 			HttpContext localContext = new BasicHttpContext();
 			// Bind custom cookie store to the local context
 			localContext.setAttribute(ClientContext.COOKIE_STORE,
-					SessionCookieStore.cookieStore);
+					SyncService.cookieStore);
 			ResponseHandler<String> responseHandler = new BasicResponseHandler();
 			str = hc.execute(post, responseHandler, localContext);
 		} catch (IOException e) {
@@ -157,11 +156,9 @@ public class GamesDownloader extends Observable implements Runnable {
 								new String[] { MySQLiteHelper.COLUMN_GAMEID },
 								selection, null, null, null, null);
 						if (cursor.getCount() > 0) {
-							GamesActivity.isLastPageReached = false;
 							database.update(MySQLiteHelper.TABLE_GAMES, values,
 									selection, null);
 						} else if (values.size() > 0) {
-							GamesActivity.isLastPageReached = false;
 							amountAdded++;
 							database.insert(MySQLiteHelper.TABLE_GAMES, null,
 									values);
